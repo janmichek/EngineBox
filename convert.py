@@ -108,9 +108,14 @@ def do_convert(playlist_names, output_path=OUTPUT, golden_ref=None):
 
         tracks = []
         track_id_map = {}
-        for idx, tid in enumerate(all_track_ids):
-            track_id_map[tid] = idx
-            data = load_track(db, tid)
+        next_idx = 0
+        for tid in all_track_ids:
+            try:
+                data = load_track(db, tid)
+            except ValueError:
+                continue
+            track_id_map[tid] = next_idx
+            next_idx += 1
             perf = load_performance_data(db, tid)
 
             golden = golden_ref.get(data["filename"], None)
@@ -203,11 +208,12 @@ def do_convert(playlist_names, output_path=OUTPUT, golden_ref=None):
 
         model_playlists = []
         for pl in playlists_result:
+            keys = [track_id_map[tid] for tid in pl.track_ids if tid in track_id_map]
             model_playlists.append(
                 Playlist(
                     name=pl.name,
-                    entries=len(pl.track_ids),
-                    track_keys=[track_id_map[tid] for tid in pl.track_ids],
+                    entries=len(keys),
+                    track_keys=keys,
                 )
             )
 

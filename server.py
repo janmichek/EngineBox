@@ -29,7 +29,7 @@ conversion_state = {
 def get_all_playlists(db):
     rows = db.query(
         "SELECT id, title FROM Playlist WHERE title IS NOT NULL AND title != '' ORDER BY title"
-    ]
+    )
     return [{"id": r[0], "name": r[1]} for r in rows]
 
 
@@ -52,6 +52,7 @@ def run_conversion(selected_playlist_names):
 
     try:
         from convert import convert_with_playlists
+
         conversion_state["progress"] = 10
         conversion_state["message"] = "Loading database..."
         output = convert_with_playlists(selected_playlist_names)
@@ -109,7 +110,7 @@ class APIHandler(SimpleHTTPRequestHandler):
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length)
         data = json.loads(body)
-        selected = data.get("playlists", [])
+        selected = list(dict.fromkeys(data.get("playlists", [])))
 
         if not selected:
             self._json_response(400, {"error": "No playlists selected"})

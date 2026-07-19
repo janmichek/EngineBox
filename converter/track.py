@@ -206,8 +206,9 @@ def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
     )
     if not rows:
         raise ValueError(f"Track {track_id} not found")
+    title = rows[0][0] or rows[0][6]  # fallback to filename
     return {
-        "title": rows[0][0],
+        "title": title,
         "artist": rows[0][1],
         "album": rows[0][2],
         "genre": rows[0][3],

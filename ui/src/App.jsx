@@ -34,9 +34,9 @@ function App() {
   }, [])
 
   const handleConvert = async () => {
-    const names = Object.entries(selected)
-      .filter(([, v]) => v)
-      .map(([k]) => k)
+    const names = playlists
+      .filter(p => selected[p.id])
+      .map(p => p.name)
     if (names.length === 0) return
 
     setStatus({ status: 'running', progress: 0, message: 'Starting...' })
@@ -53,13 +53,13 @@ function App() {
     }
   }
 
-  const toggle = (name) => {
-    setSelected(prev => ({ ...prev, [name]: !prev[name] }))
+  const toggle = (id) => {
+    setSelected(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
   const selectAll = () => {
     const next = {}
-    playlists.forEach(p => { next[p.name] = true })
+    playlists.forEach(p => { next[p.id] = true })
     setSelected(next)
   }
 
@@ -83,12 +83,12 @@ function App() {
 
       <ul className="playlist-list">
         {playlists.map(p => (
-          <li key={p.name} className={selected[p.name] ? 'selected' : ''}>
+          <li key={p.id} className={selected[p.id] ? 'selected' : ''}>
             <label>
               <input
                 type="checkbox"
-                checked={!!selected[p.name]}
-                onChange={() => toggle(p.name)}
+                checked={!!selected[p.id]}
+                onChange={() => toggle(p.id)}
                 disabled={isRunning}
               />
               <span className="name">{p.name}</span>

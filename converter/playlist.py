@@ -25,6 +25,8 @@ def _traverse_linked_list(db: ReadOnlyDatabase, list_id: int) -> List[int]:
         r[0]
         for r in db.query("SELECT id FROM PlaylistEntity WHERE listId = ?", (list_id,))
     )
+    if not all_ids:
+        return []
     all_next = set(
         r[0]
         for r in db.query(
