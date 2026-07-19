@@ -31,3 +31,8 @@ Irreversible or hard-to-reverse choices, with rationale. Never edit past entries
 - Decision: convert exactly `KVIFF 2026` and `DŇB`, selected by exact title. Do not expose playlist selection in the CLI and do not select by fixture-specific IDs.
 - Why: the requested product is intentionally limited to these two playlists while remaining independent of SQLite row IDs.
 - Revisit if: the user later expands scope.
+
+## 2026-07-19 — Skip TEMPO output
+- Decision: do not emit `TEMPO` elements in the generated XML. The converter will produce tracks, cues, loops, and playlists but no beat-grid markers.
+- Why: `Inizio` (beat grid offset) cannot be exactly derived from beatData markers; only 4/293 tracks match within 0.0005s. The exact-match rule prohibits approximate values, and MIXO's derivation relies on proprietary audio DSP not available from the database alone.
+- Revisit if: the exact `Inizio` formula is reverse-engineered, or the acceptance criteria are relaxed to allow approximate beat-grid offsets.

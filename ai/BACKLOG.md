@@ -25,7 +25,7 @@ A human must create a baseline commit containing the intended project setup, the
 - [x] Decode `quickCues` into raw slot labels, sample positions, and ARGB colors; verify blob structure across all selected tracks.
 - [x] Derive the exact MIXO cue-time adjustment and emit Type `0` `POSITION_MARK` elements; every `Start`, name, slot, and RGB value must match.
 - [x] Decode `loops` and reproduce the golden Type `4` `POSITION_MARK`, including exact `Start` and `End`; verify no other loop output is missing.
-- [ ] Decode `beatData`, derive the exact MIXO beat-grid adjustment, and emit `TEMPO`; every `Inizio`, BPM, meter, and beat value must match.
+- [x] ~~Decode `beatData`, derive the exact MIXO beat-grid adjustment, and emit `TEMPO`; every `Inizio`, BPM, meter, and beat value must match.~~ SKIPPED — `Inizio` cannot be derived exactly from beatData; human decision to skip TEMPO output entirely.
 - [ ] Generate the two playlist nodes and occurrence-based collection references; pass the complete exact semantic comparison.
 
 ## Later
