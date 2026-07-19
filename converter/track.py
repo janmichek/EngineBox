@@ -90,6 +90,33 @@ def map_comment(
     return flattened
 
 
+def decode_quick_cues(blob: bytes) -> List[dict]:
+    decompressed = zlib.decompress(blob[4:])
+    num_slots = struct.unpack(">Q", decompressed[:8])[0]
+    offset = 8
+    cues = []
+    for _ in range(num_slots):
+        label_len = decompressed[offset]
+        offset += 1
+        label = decompressed[offset : offset + label_len].decode("utf-8")
+        offset += label_len
+        position = struct.unpack(">d", decompressed[offset : offset + 8])[0]
+        offset += 8
+        argb = struct.unpack(">I", decompressed[offset : offset + 4])[0]
+        offset += 4
+        if label:
+            cues.append(
+                {
+                    "label": label,
+                    "position": position,
+                    "red": (argb >> 16) & 0xFF,
+                    "green": (argb >> 8) & 0xFF,
+                    "blue": argb & 0xFF,
+                }
+            )
+    return cues
+
+
 def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
     rows = db.query(
         """SELECT title, artist, album, genre, fileType, path, filename,

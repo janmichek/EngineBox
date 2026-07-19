@@ -7,6 +7,7 @@ from converter.source_reader import ReadOnlyDatabase
 from converter.track import (
     KEY_MAP,
     decode_beat_data,
+    decode_quick_cues,
     load_track,
     map_comment,
     map_key,
@@ -215,3 +216,75 @@ class TestTrackModel(unittest.TestCase):
                 )
 
         self.assertEqual(len(mismatches), 0, "\n".join(mismatches[:10]))
+
+    def test_decode_quick_cues_labels_and_colors_all_tracks(self):
+        name_mismatches = []
+        color_mismatches = []
+        count_mismatches = []
+
+        golden_tree = ET.parse("databases/rekordbox.xml")
+        golden_marks_by_filename = {}
+        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
+            loc = t.attrib["Location"]
+            path = unquote(loc.replace("file://localhost/", ""))
+            filename = path.split("/")[-1]
+            marks = t.findall("POSITION_MARK")
+            golden_marks_by_filename[filename] = marks
+
+        kviff_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
+            )
+        ]
+        dnb_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
+            )
+        ]
+        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
+
+        for tid in all_ids:
+            data = load_track(self.db, tid)
+            filename = data["filename"]
+            if filename not in golden_marks_by_filename:
+                continue
+            golden_marks = golden_marks_by_filename[filename]
+
+            qc_rows = self.db.query(
+                "SELECT quickCues FROM PerformanceData WHERE trackId = ?",
+                (tid,),
+            )
+            if not qc_rows or not qc_rows[0][0]:
+                continue
+
+            source_cues = decode_quick_cues(qc_rows[0][0])
+            golden_cue_marks = [m for m in golden_marks if m.attrib["Type"] == "0"]
+            if len(source_cues) != len(golden_cue_marks):
+                has_loop = any(m.attrib["Type"] == "4" for m in golden_marks)
+                if has_loop:
+                    continue
+                count_mismatches.append(
+                    f"Track {tid}: source={len(source_cues)}, golden_cues={len(golden_cue_marks)}"
+                )
+
+            for j, cue in enumerate(source_cues):
+                if j < len(golden_cue_marks):
+                    gm = golden_cue_marks[j]
+                    if cue["label"] != gm.attrib["Name"]:
+                        name_mismatches.append(
+                            f"Track {tid}, cue {j}: {cue['label']!r} != {gm.attrib['Name']!r}"
+                        )
+                    if (
+                        cue["red"] != int(gm.attrib["Red"])
+                        or cue["green"] != int(gm.attrib["Green"])
+                        or cue["blue"] != int(gm.attrib["Blue"])
+                    ):
+                        color_mismatches.append(
+                            f"Track {tid}, cue {j}: ({cue['red']},{cue['green']},{cue['blue']}) != ({gm.attrib['Red']},{gm.attrib['Green']},{gm.attrib['Blue']})"
+                        )
+
+        self.assertEqual(len(name_mismatches), 0, "\n".join(name_mismatches[:10]))
+        self.assertEqual(len(color_mismatches), 0, "\n".join(color_mismatches[:10]))
+        self.assertEqual(len(count_mismatches), 0, "\n".join(count_mismatches[:10]))

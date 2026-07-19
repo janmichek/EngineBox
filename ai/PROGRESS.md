@@ -79,3 +79,9 @@ Newest entry last. Never edit past entries.
 - Verified: 10 unit tests pass; structure matches golden XML; semantic comparison confirms identical model roundtrip; reference file hashes unchanged.
 - Next: decode quickCues into raw slot labels, sample positions, and ARGB colors.
 - Blocked/Notes: XML generator produces correct structure but does not yet include position marks or tempo from source data.
+
+## 2026-07-19 — Decode quickCues blob structure
+- Did: created `decode_quick_cues` function in `converter/track.py`; parses 4-byte BE prefix + zlib blob with 8 fixed slots (label_len, label, position double, ARGB); filters active cues by non-empty label; verified across all 293 tracks.
+- Verified: 1 test pass (test_decode_quick_cues_labels_and_colors_all_tracks); 1056/1056 cue labels and colors match golden XML; 1 track (12868) has a loop counted separately; reference file hashes unchanged.
+- Next: derive the exact MIXO cue-time adjustment and emit Type 0 POSITION_MARK elements.
+- Blocked/Notes: raw cue positions are doubles (samples at 44100 Hz) requiring per-track timing adjustment to match golden Start values; adjustment varies by track (~0.00 to +0.06s).
