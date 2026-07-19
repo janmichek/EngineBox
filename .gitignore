@@ -1,0 +1,18 @@
+# Immutable local source and golden reference files
+databases/
+
+# Generated converter output
+output/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# macOS
+.DS_Store
+
+# Editors / local tooling
+.idea/
+.cursor/
