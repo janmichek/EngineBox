@@ -31,3 +31,9 @@ Newest entry last. Never edit past entries.
 - Verified: 16 unit tests pass; BitRate is optional (106 tracks missing it); reference file hashes unchanged.
 - Next: implement an exact semantic comparator with focused mismatch output.
 - Blocked/Notes: 106 of 293 tracks have no BitRate attribute in golden XML.
+
+## 2026-07-19 — Implement exact semantic comparator
+- Did: created `converter/comparator.py` with compare_models function and ComparisonResult class; compares product info, collection, tracks (all scalar fields, position marks, tempos), and playlists with focused mismatch messages.
+- Verified: 11 unit tests pass including identical model equality and detection of name, timing, tempo, cue, color, collection count, and playlist mismatches; reference file hashes unchanged.
+- Next: build a read-only source reader that opens an Engine SQLite path with mode=ro, validates schema 3.0.2, and rejects missing or incompatible databases.
+- Blocked/Notes: comparator uses exact value matching with no tolerances as required.
