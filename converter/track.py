@@ -200,7 +200,7 @@ def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
     rows = db.query(
         """SELECT title, artist, album, genre, fileType, path, filename,
                   fileBytes, length, year, bpmAnalyzed, bitrate, comment,
-                  key, label
+                  key, label, playOrder
            FROM Track WHERE id = ?""",
         (track_id,),
     )
@@ -222,6 +222,7 @@ def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
         "comment": rows[0][12],
         "key": rows[0][13],
         "label": rows[0][14],
+        "playOrder": rows[0][15],
     }
 
 

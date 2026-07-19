@@ -1,10 +1,11 @@
 {
   "name": "convertor",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Engine OS to Rekordbox XML converter",
+  "main": "convert.py",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "convert": "python3 convert.py",
+    "test": "python3 -m unittest discover -s tests"
   },
   "private": true
 }
