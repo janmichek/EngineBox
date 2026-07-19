@@ -9,6 +9,7 @@ from converter.track import (
     compute_cue_marks,
     compute_loop_marks,
     decode_beat_data,
+    decode_beat_grid,
     decode_loops,
     decode_quick_cues,
     decode_track_data_sample_rate,

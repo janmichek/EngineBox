@@ -15,8 +15,9 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 - [x] Which exact source columns map to each optional Rekordbox `TRACK` attribute?
 - [ ] How does MIXO derive exact decimal `TotalTime` values?
 - [x] Is `/Users/yeahboi` path-root rewriting required, or can the correct root be derived?
-- [ ] Which Engine beat-grid marker becomes the single MIXO `TEMPO` element?
+- [x] Which Engine beat-grid marker becomes the single MIXO `TEMPO` element?
 - [x] How does MIXO apply the exact per-track timing adjustment to cue, loop, and tempo positions?
+- [ ] How does MIXO derive the exact `Inizio` value from the beatData markers? (BPM matches exactly but Inizio does not.)
 - [ ] Does every selected track use the same Engine 3.0.2 blob layout?
 
 ## Experiments
@@ -71,3 +72,9 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 - `PerformanceData.quickCues` blob structure: 4-byte BE prefix + zlib. Decompressed format: 8-byte uint64 num_slots, then 8 fixed-size slots. Each slot: 1-byte label_len, N-byte UTF-8 label, 8-byte BE double (position in samples at 44100 Hz), 4-byte BE uint32 ARGB color. A 17-byte footer follows (double + double + byte). Active cues are filtered by non-empty label (not by position >= 0, since some cues have negative positions that become positive after timing adjustment).
 - quickCues blob always contains exactly 8 slots. Empty slots have label_len=0, position=-1.0, ARGB=0x00000000. Active cue labels are "Cue 1" through "Cue 8"; slot order maps to golden XML `Num` index.
 - Across all 293 tracks, 1056 active cue labels and RGB values match golden XML exactly. The only count mismatch is track 12868 which has a Type 4 loop (from the `loops` blob) interleaved with cues in golden.
+- `loops` blob format: NOT zlib-compressed. Raw binary with uint64 LE header (num_slots), then per slot: 1-byte label_len, N-byte UTF-8 label, 8-byte LE float64 start (samples at trackData sample rate), 8-byte LE float64 end (samples), 2-byte unknown, 4-byte BE uint32 ARGB color. Empty slots have label_len=0. All 293 selected tracks have 8 loop slots. Only 1 track (12868) has a non-empty loop ("Loop 1") matching golden exactly.
+- Loop positions use the same per-track timing adjustment as cues (interval-based `find_cue_adjustment`). With that adjustment, Start and End match golden XML exactly.
+- `beatData` blob structure (confirmed via Mixxx wiki): 4-byte BE prefix + zlib. Decompressed: 8B sample_rate (BE double), 8B track_length_samples (BE double), 1B is_beat_data_set (always 1), 8B default_marker_count (BE uint64), N default markers (each 24B: 8B sample_offset LE double, 8B beat_number LE int64, 4B beats_to_next LE uint32, 4B unknown LE uint32), then 8B adjusted_marker_count (BE uint64), then N adjusted markers (same format). 9 trailing zero bytes follow.
+- BPM computed from markers matches golden `TEMPO/@Bpm` exactly for all 293 tracks.
+- `Inizio` (beat grid offset) computed from markers does NOT exactly match golden for most tracks (only 4/293 within 0.0005s). The derivation of `Inizio` from the beatData markers remains an open question — it is not simply the time of beat 0 via linear interpolation.
+- 36/293 tracks have adjusted beatgrid markers different from default markers.

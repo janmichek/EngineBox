@@ -59,11 +59,69 @@ for k in range(25):
 
 
 def decode_beat_data(blob: bytes) -> float:
-    prefix = struct.unpack(">I", blob[:4])[0]
     decompressed = zlib.decompress(blob[4:])
     sample_rate = struct.unpack(">d", decompressed[:8])[0]
     total_samples = struct.unpack(">d", decompressed[8:16])[0]
     return total_samples / sample_rate
+
+
+def decode_beat_grid(blob: bytes) -> dict:
+    """Decode beatData blob into BPM and beat grid markers.
+    Format: 4-byte BE prefix + zlib. Decompressed:
+      8B sample_rate (BE double), 8B track_length_samples (BE double),
+      1B is_beat_data_set, 8B default_marker_count (BE uint64),
+      N markers (24B each: 8B sample_offset LE double, 8B beat_number LE int64,
+      4B beats_to_next LE uint32, 4B unknown LE uint32),
+      8B adjusted_marker_count (BE uint64), then same marker format."""
+    decompressed = zlib.decompress(blob[4:])
+    offset = 0
+    sample_rate = struct.unpack(">d", decompressed[offset : offset + 8])[0]
+    offset += 8
+    track_length_samples = struct.unpack(">d", decompressed[offset : offset + 8])[0]
+    offset += 8
+    offset += 1  # is_beat_data_set
+
+    def _parse_markers(data, off, count):
+        markers = []
+        for _ in range(count):
+            s = struct.unpack("<d", data[off : off + 8])[0]
+            off += 8
+            b = struct.unpack("<q", data[off : off + 8])[0]
+            off += 8
+            off += 8  # beats_to_next + unknown
+            markers.append((s, b))
+        return markers, off
+
+    default_count = struct.unpack(">Q", decompressed[offset : offset + 8])[0]
+    offset += 8
+    default_markers, offset = _parse_markers(decompressed, offset, default_count)
+    adjusted_count = struct.unpack(">Q", decompressed[offset : offset + 8])[0]
+    offset += 8
+    adjusted_markers, _ = _parse_markers(decompressed, offset, adjusted_count)
+
+    markers = (
+        adjusted_markers if adjusted_markers != default_markers else default_markers
+    )
+    bpm = None
+    inizio = None
+    if len(markers) >= 2:
+        first_s, first_b = markers[0]
+        last_s, last_b = markers[-1]
+        beat_span = last_b - first_b
+        sample_span = last_s - first_s
+        if beat_span != 0 and sample_span != 0:
+            bpm = sample_rate * 60 * beat_span / sample_span
+            samples_per_beat = sample_span / beat_span
+            beat_0_sample = first_s + (0 - first_b) * samples_per_beat
+            inizio = beat_0_sample / sample_rate
+
+    return {
+        "sample_rate": sample_rate,
+        "track_length_samples": track_length_samples,
+        "bpm": bpm,
+        "inizio": inizio,
+        "markers": markers,
+    }
 
 
 def map_location(path: str) -> str:
