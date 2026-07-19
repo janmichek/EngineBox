@@ -38,12 +38,17 @@ Source of truth for what to build. Only confirmed behavior belongs here; hypothe
 - XML whitespace, indentation, attribute order, and equivalent representations of the same numeric value do not need to match.
 - Output locations must equal the golden XML locations. The fixture appears to map leading `../../` to `/Users/yeahboi/`; keep this rule isolated and prove it across all 293 tracks before promoting it to a general mapping.
 
+## Known limitation (confirmed, decision made)
+
+- The golden `TEMPO/@Inizio` values are not derivable from `databases/m.db`. MIXO re-analyzes beatgrids with its own audio DSP during import (per its documentation and confirmed by systematic exclusion of every database-side derivation; see `ai/RESEARCH.md`, 2026-07-19 experiment). The residual between any Engine-derived beat phase and the golden value is a per-track ±1–5 ms noise that cannot be reproduced without MIXO's proprietary analysis.
+- `TEMPO/@Bpm` (from beatData markers), `@Metro` (`4/4`), and `@Battito` (`1`) are exactly derivable but will not be emitted.
+- Decision: the converter does not emit `TEMPO` elements. The no-tolerance rule stays in force for every other value.
+
 ## Metadata in scope
 
 - Collection and playlist membership/order.
 - Track title, artist, album, genre, file type, location, file size, duration, track number, year, BPM, bitrate, comments, musical key, label, and sample rate when present.
 - Hot-cue name, slot, position, and RGB color.
-- Rekordbox tempo marker fields represented by the golden XML.
 
 ## Non-goals
 

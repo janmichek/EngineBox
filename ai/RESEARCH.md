@@ -17,7 +17,7 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 - [x] Is `/Users/yeahboi` path-root rewriting required, or can the correct root be derived?
 - [x] Which Engine beat-grid marker becomes the single MIXO `TEMPO` element?
 - [x] How does MIXO apply the exact per-track timing adjustment to cue, loop, and tempo positions?
-- [ ] How does MIXO derive the exact `Inizio` value from the beatData markers? (BPM matches exactly but Inizio does not.)
+- [x] How does MIXO derive the exact `Inizio` value from the beatData markers? (Answer: it does not — evidence indicates MIXO re-analyzes beatgrids with its own DSP during import, so the exact `Inizio` phase is not derivable from the Engine database. See 2026-07-19 experiment below.)
 - [ ] Does every selected track use the same Engine 3.0.2 blob layout?
 
 ## Experiments
@@ -30,6 +30,19 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 - Conclusion: <confirmed / refuted / inconclusive>
 - Promoted to SPEC: yes/no
 -->
+
+## 2026-07-19 — Inizio is not derivable from the Engine database (systematic exclusion)
+
+- Input: all 293 source/golden pairs; per-track feasible intervals for the timing adjustment derived from rounded golden cue `Start` values (width typically < 1 ms); every plausible Engine-side anchor for the beat-grid phase.
+- Observed:
+  - Joint feasibility test: only 35/293 tracks have a single per-track adjustment satisfying both cues and `Inizio`; the `Inizio` residual (typically 1–5 ms, range −53 ms to +10 ms) exceeds the sub-millisecond cue interval width, so `TEMPO` is not "cues' adjustment applied to beat 0".
+  - Anchors excluded: beat 0 by linear extrapolation (exact and rounded-BPM samples-per-beat), first marker treated as beat −4, last marker stepped back with rounded golden BPM (accumulated-rounding hypothesis: correlation of residual with accumulated error is 0.04), first golden cue snapped back an integer number of beats (rounded and raw variants: 13–16/283 matches), and the `quickCues` footer double (it equals the beat-0/main-cue sample position; same residual).
+  - Constant offsets excluded: per-file-type interval intersection is empty (mp3 n=251 and wav n=31 both infeasible); residual is not a multiple of beat length, not correlated with marker count, track length, bitrate, or LAME encoder delay (most files have no LAME/Xing tag; where present, delay does not equal the cue adjustment either).
+  - Linear rescaling excluded: best fit `Inizio ≈ 1.00708 × engine_inizio − 0.0024` still leaves only 105/283 tracks within 0.6 ms; residual stdev 3.8 ms.
+  - `trackData` fully decoded (sample rate double, uint64 length, 0xFFFFFFFF, 3–6 loudness doubles) — no phase value. No other table in `m.db` stores beat-grid data. `Track.lastEditTime` shows only 1 of 293 tracks edited after the golden export date, so post-export grid edits do not explain the mismatch.
+  - MIXO's own documentation states track import runs "Track Analysis" which "analyzes beatgrids for all tracks during the import" (mixo.dj Engine DJ to Rekordbox guide); the observed few-millisecond per-track phase noise is consistent with an independent DSP phase estimate that preserves Engine's BPM.
+- Conclusion: confirmed negative result — golden `Inizio` values are the product of MIXO's own audio analysis, not a pure database transformation. Exact reproduction from `m.db` alone is impossible; reproducing MIXO's proprietary DSP bit-exactly is out of reach. `Bpm` (from markers), `Metro` (always `4/4`), and `Battito` (always `1`) remain exactly derivable.
+- Promoted to SPEC: yes (Inizio limitation documented as a known deviation requiring user decision).
 
 ## Findings (confirmed)
 
