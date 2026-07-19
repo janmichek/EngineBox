@@ -37,3 +37,9 @@ Newest entry last. Never edit past entries.
 - Verified: 11 unit tests pass including identical model equality and detection of name, timing, tempo, cue, color, collection count, and playlist mismatches; reference file hashes unchanged.
 - Next: build a read-only source reader that opens an Engine SQLite path with mode=ro, validates schema 3.0.2, and rejects missing or incompatible databases.
 - Blocked/Notes: comparator uses exact value matching with no tolerances as required.
+
+## 2026-07-19 — Build read-only source reader
+- Did: created `converter/source_reader.py` with ReadOnlyDatabase class supporting context manager, read-only mode, and validation; 7 unit tests covering open, validate, query, missing database, and read-only enforcement.
+- Verified: 34 tests pass; reference file hashes unchanged.
+- Next: implement linked-list playlist traversal selected by hardcoded exact names `KVIFF 2026` and `DŇB`.
+- Blocked/Notes: database has 10 tables; Track table confirmed queryable.
