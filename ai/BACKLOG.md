@@ -13,7 +13,7 @@ A human must create a baseline commit containing the intended project setup, the
 - [x] Build a golden XML parser that normalizes the reference document into collection tracks, cue/tempo data, and ordered playlists.
 - [x] Implement an exact semantic comparator with focused mismatch output; prove it ignores XML formatting and equivalent numeric representation but rejects every changed value and uses no tolerances.
 - [x] Build a read-only source reader that opens an Engine SQLite path with `mode=ro`, validates schema 3.0.2, and rejects missing or incompatible databases.
-- [ ] Implement linked-list playlist traversal selected by the hardcoded exact names `KVIFF 2026` and `DŇB`; assert fixture IDs/counts/order without using IDs for selection.
+- [x] Implement linked-list playlist traversal selected by the hardcoded exact names `KVIFF 2026` and `DŇB`; assert fixture IDs/counts/order without using IDs for selection.
 
 ## Next
 

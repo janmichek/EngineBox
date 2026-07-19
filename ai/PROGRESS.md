@@ -43,3 +43,9 @@ Newest entry last. Never edit past entries.
 - Verified: 34 tests pass; reference file hashes unchanged.
 - Next: implement linked-list playlist traversal selected by hardcoded exact names `KVIFF 2026` and `DŇB`.
 - Blocked/Notes: database has 10 tables; Track table confirmed queryable.
+
+## 2026-07-19 — Implement linked-list playlist traversal
+- Did: created `converter/playlist.py` with find_playlist_by_name, _traverse_linked_list, and load_playlists functions; finds unreferenced entity, follows nextEntityId chain to 0.
+- Verified: 7 unit tests pass; KVIFF 2026 has 178 tracks (first: "Finish Line (Original Mix)"), DŇB has 115 tracks; reference file hashes unchanged.
+- Next: characterize every scalar TRACK attribute across all 293 source/golden pairs.
+- Blocked/Notes: linked list is reverse (nextEntityId points to previous entity); unreferenced entity is first.
