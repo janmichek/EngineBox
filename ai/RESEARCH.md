@@ -12,9 +12,9 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 
 ## Open questions
 
-- [ ] Which exact source columns map to each optional Rekordbox `TRACK` attribute?
+- [x] Which exact source columns map to each optional Rekordbox `TRACK` attribute?
 - [ ] How does MIXO derive exact decimal `TotalTime` values?
-- [ ] Is `/Users/yeahboi` path-root rewriting required, or can the correct root be derived?
+- [x] Is `/Users/yeahboi` path-root rewriting required, or can the correct root be derived?
 - [ ] Which Engine beat-grid marker becomes the single MIXO `TEMPO` element?
 - [ ] How does MIXO apply the exact per-track timing adjustment to cue, loop, and tempo positions?
 - [ ] Does every selected track use the same Engine 3.0.2 blob layout?
@@ -47,3 +47,19 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 - A decoded `quickCues` sample confirmed eight slots with UTF-8 labels, big-endian sample positions, and ARGB colors that match the golden XML exactly.
 - Raw cue samples require an additional exact per-track timing adjustment before matching MIXO; tolerances are not acceptable.
 - The golden XML contains 1,060 `POSITION_MARK` elements, including one Type `4` loop with `Start` and `End`, plus `TEMPO` markers and two root playlist nodes.
+- Confirmed scalar TRACK attribute mappings across all 293 tracks:
+  - `Track.title` → `Name` (exact match)
+  - `Track.artist` → `Artist` (None → omit attribute)
+  - `Track.album` → `Album` (None → omit attribute)
+  - `Track.genre` → `Genre` (None → omit attribute)
+  - `Track.fileType` → `Kind` (exact match)
+  - `Track.path + Track.filename` → `Location` (replace `../../` with `Users/yeahboi/`, URL-encode, prefix `file://localhost/`)
+  - `Track.fileBytes` → `Size` (exact match)
+  - `Track.length` → `TotalTime` (integer match for 235 tracks; 58 tracks have decimal TotalTime from trackData blob)
+  - `Track.year` → `Year` (None → omit attribute)
+  - `Track.bpmAnalyzed` → `AverageBpm` (formatted to 3 decimal places)
+  - `Track.bitrate` → `BitRate` (None → omit attribute; 106 tracks missing)
+  - `Track.comment` → `Comments` (None → omit attribute; MIXO adds 'Purchased at Beatport' to 12 tracks; long comments truncated to 247 chars with newlines stripped)
+  - `Track.key` → `Tonality` (even k → `{k/2+1}d`, odd k → `{floor(k/2)+1}m`)
+  - `Track.label` → `Label` (None → omit attribute)
+  - `Track.sampleRate` → `SampleRate` (hardcoded 44100 for all tracks)

@@ -49,3 +49,9 @@ Newest entry last. Never edit past entries.
 - Verified: 7 unit tests pass; KVIFF 2026 has 178 tracks (first: "Finish Line (Original Mix)"), DŇB has 115 tracks; reference file hashes unchanged.
 - Next: characterize every scalar TRACK attribute across all 293 source/golden pairs.
 - Blocked/Notes: linked list is reverse (nextEntityId points to previous entity); unreferenced entity is first.
+
+## 2026-07-19 — Characterize scalar TRACK attributes
+- Did: matched all 293 source tracks to golden XML by filename; documented exact mappings for all scalar attributes including title, artist, album, genre, kind, location, size, duration, year, BPM, bitrate, comments, key, label, sample rate.
+- Verified: location mapping confirmed (../../ → Users/yeahboi/); key mapping confirmed (even→d, odd→m); comment handling documented (12 tracks get MIXO-added 'Purchased at Beatport', long comments truncated to 247 chars).
+- Next: decode and test trackData; derive exact sample rate and TotalTime mapping.
+- Blocked/Notes: 58 tracks have decimal TotalTime from trackData blob (source length is integer); 106 tracks missing BitRate; sample rate is always 44100.
