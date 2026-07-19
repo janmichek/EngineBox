@@ -5,7 +5,10 @@
   "main": "convert.py",
   "scripts": {
     "convert": "python3 convert.py",
-    "test": "python3 -m unittest discover -s tests"
+    "test": "python3 -m unittest discover -s tests",
+    "server": "python3 server.py",
+    "ui:dev": "npm run dev --prefix ui",
+    "ui:build": "npm run build --prefix ui"
   },
   "private": true
 }

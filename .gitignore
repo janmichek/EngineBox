@@ -16,3 +16,8 @@ venv/
 # Editors / local tooling
 .idea/
 .cursor/
+
+# Node
+node_modules/
+ui/node_modules/
+ui/dist/
