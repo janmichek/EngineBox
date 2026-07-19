@@ -209,3 +209,65 @@ def compute_cue_marks(
             )
         )
     return marks
+
+
+def decode_loops(blob: bytes) -> List[dict]:
+    """Decode the loops blob. Format: uint64 LE num_slots, then per slot:
+    1-byte label_len, N-byte UTF-8 label, 8-byte LE float64 start (samples),
+    8-byte LE float64 end (samples), 2-byte unknown, 4-byte BE ARGB color."""
+    num_slots = struct.unpack("<Q", blob[:8])[0]
+    offset = 8
+    loops = []
+    for _ in range(num_slots):
+        label_len = blob[offset]
+        offset += 1
+        label = blob[offset : offset + label_len].decode("utf-8")
+        offset += label_len
+        start_samples = struct.unpack("<d", blob[offset : offset + 8])[0]
+        offset += 8
+        end_samples = struct.unpack("<d", blob[offset : offset + 8])[0]
+        offset += 8
+        _unknown = blob[offset : offset + 2]
+        offset += 2
+        argb = struct.unpack(">I", blob[offset : offset + 4])[0]
+        offset += 4
+        if label:
+            loops.append(
+                {
+                    "label": label,
+                    "start_samples": start_samples,
+                    "end_samples": end_samples,
+                    "red": (argb >> 16) & 0xFF,
+                    "green": (argb >> 8) & 0xFF,
+                    "blue": argb & 0xFF,
+                }
+            )
+    return loops
+
+
+def compute_loop_marks(
+    loops_blob: bytes,
+    track_data_blob: bytes,
+    cue_adjustment: float,
+    next_num: int,
+) -> List[OutputPositionMark]:
+    """Decode loops and produce OutputPositionMark list (Type 4) with adjusted times."""
+    loops = decode_loops(loops_blob)
+    td_sr = decode_track_data_sample_rate(track_data_blob)
+    marks = []
+    for idx, loop in enumerate(loops):
+        start = round(loop["start_samples"] / td_sr + cue_adjustment, 3)
+        end = round(loop["end_samples"] / td_sr + cue_adjustment, 3)
+        marks.append(
+            OutputPositionMark(
+                name=loop["label"],
+                mark_type=4,
+                start=start,
+                num=next_num + idx,
+                red=loop["red"],
+                green=loop["green"],
+                blue=loop["blue"],
+                end=end,
+            )
+        )
+    return marks

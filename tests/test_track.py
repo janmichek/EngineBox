@@ -6,10 +6,14 @@ from converter.golden_parser import parse_golden_xml
 from converter.source_reader import ReadOnlyDatabase
 from converter.track import (
     KEY_MAP,
+    compute_cue_marks,
+    compute_loop_marks,
     decode_beat_data,
+    decode_loops,
     decode_quick_cues,
     decode_track_data_sample_rate,
     find_cue_adjustment,
+    load_performance_data,
     load_track,
     map_comment,
     map_key,
@@ -310,12 +314,6 @@ class TestTrackModel(unittest.TestCase):
         )
 
     def test_compute_cue_marks_match_golden(self):
-        from converter.track import (
-            compute_cue_marks,
-            load_performance_data,
-            find_cue_adjustment,
-        )
-
         start_mismatches = []
         num_mismatches = []
 
@@ -390,3 +388,155 @@ class TestTrackModel(unittest.TestCase):
 
         self.assertEqual(len(num_mismatches), 0, "\n".join(num_mismatches[:10]))
         self.assertEqual(len(start_mismatches), 0, "\n".join(start_mismatches[:20]))
+
+    def test_decode_loops_all_tracks(self):
+        from converter.track import decode_loops
+
+        kviff_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
+            )
+        ]
+        dnb_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
+            )
+        ]
+        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
+
+        label_mismatches = []
+        color_mismatches = []
+        count_mismatches = []
+
+        golden_tree = ET.parse("databases/rekordbox.xml")
+        golden_marks_by_filename = {}
+        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
+            loc = t.attrib["Location"]
+            path = unquote(loc.replace("file://localhost/", ""))
+            filename = path.split("/")[-1]
+            marks = t.findall("POSITION_MARK")
+            golden_marks_by_filename[filename] = marks
+
+        for tid in all_ids:
+            data = load_track(self.db, tid)
+            filename = data["filename"]
+            if filename not in golden_marks_by_filename:
+                continue
+            golden_marks = golden_marks_by_filename[filename]
+            golden_loop_marks = [m for m in golden_marks if m.attrib["Type"] == "4"]
+
+            perf = load_performance_data(self.db, tid)
+            if not perf or not perf["loops"]:
+                if golden_loop_marks:
+                    count_mismatches.append(
+                        f"Track {tid}: no loops blob but golden has {len(golden_loop_marks)} loops"
+                    )
+                continue
+
+            source_loops = decode_loops(perf["loops"])
+            if len(source_loops) != len(golden_loop_marks):
+                count_mismatches.append(
+                    f"Track {tid}: source={len(source_loops)}, golden={len(golden_loop_marks)}"
+                )
+
+            for j, loop in enumerate(source_loops):
+                if j < len(golden_loop_marks):
+                    gm = golden_loop_marks[j]
+                    if loop["label"] != gm.attrib["Name"]:
+                        label_mismatches.append(
+                            f"Track {tid}, loop {j}: {loop['label']!r} != {gm.attrib['Name']!r}"
+                        )
+                    if (
+                        loop["red"] != int(gm.attrib["Red"])
+                        or loop["green"] != int(gm.attrib["Green"])
+                        or loop["blue"] != int(gm.attrib["Blue"])
+                    ):
+                        color_mismatches.append(
+                            f"Track {tid}, loop {j}: ({loop['red']},{loop['green']},{loop['blue']}) != ({gm.attrib['Red']},{gm.attrib['Green']},{gm.attrib['Blue']})"
+                        )
+
+        self.assertEqual(len(label_mismatches), 0, "\n".join(label_mismatches[:10]))
+        self.assertEqual(len(color_mismatches), 0, "\n".join(color_mismatches[:10]))
+        self.assertEqual(len(count_mismatches), 0, "\n".join(count_mismatches[:10]))
+
+    def test_compute_loop_marks_match_golden(self):
+        from converter.track import (
+            compute_loop_marks,
+            find_cue_adjustment,
+        )
+
+        golden_tree = ET.parse("databases/rekordbox.xml")
+        golden_marks_by_filename = {}
+        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
+            loc = t.attrib["Location"]
+            path = unquote(loc.replace("file://localhost/", ""))
+            filename = path.split("/")[-1]
+            marks = t.findall("POSITION_MARK")
+            golden_marks_by_filename[filename] = marks
+
+        start_mismatches = []
+        end_mismatches = []
+
+        kviff_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
+            )
+        ]
+        dnb_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
+            )
+        ]
+        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
+
+        for tid in all_ids:
+            data = load_track(self.db, tid)
+            filename = data["filename"]
+            if filename not in golden_marks_by_filename:
+                continue
+            golden_marks = golden_marks_by_filename[filename]
+            golden_loop_marks = [m for m in golden_marks if m.attrib["Type"] == "4"]
+            golden_cue_marks = [m for m in golden_marks if m.attrib["Type"] == "0"]
+            if not golden_loop_marks:
+                continue
+
+            perf = load_performance_data(self.db, tid)
+            if not perf or not perf["loops"]:
+                continue
+
+            from converter.track import decode_quick_cues, decode_loops
+
+            source_cues = decode_quick_cues(perf["quickCues"])
+            if len(source_cues) != len(golden_cue_marks):
+                continue
+
+            golden_cue_starts = [float(m.attrib["Start"]) for m in golden_cue_marks]
+            td_sr = decode_track_data_sample_rate(perf["trackData"])
+            raw_times = [c["position"] / td_sr for c in source_cues]
+            adj = find_cue_adjustment(raw_times, golden_cue_starts)
+            if adj is None:
+                continue
+
+            next_num = len(source_cues)
+            loop_marks = compute_loop_marks(
+                perf["loops"], perf["trackData"], adj, next_num
+            )
+
+            for j, mark in enumerate(loop_marks):
+                if j < len(golden_loop_marks):
+                    gm = golden_loop_marks[j]
+                    if mark.start != float(gm.attrib["Start"]):
+                        start_mismatches.append(
+                            f"Track {tid}, loop {j}: start={mark.start} != golden={gm.attrib['Start']}"
+                        )
+                    if mark.end != float(gm.attrib["End"]):
+                        end_mismatches.append(
+                            f"Track {tid}, loop {j}: end={mark.end} != golden={gm.attrib['End']}"
+                        )
+
+        self.assertEqual(len(start_mismatches), 0, "\n".join(start_mismatches[:10]))
+        self.assertEqual(len(end_mismatches), 0, "\n".join(end_mismatches[:10]))

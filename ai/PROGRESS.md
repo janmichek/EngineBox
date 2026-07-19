@@ -91,3 +91,9 @@ Newest entry last. Never edit past entries.
 - Verified: 66 tests pass; 282/286 tracks match exactly (286 golden Type 0 marks across 286 tracks, 282 have a constant per-track adjustment); 1047 cue marks verified with 0 start-time mismatches; 3 tracks (golden IDs 4, 158, 164) have per-cue intervals that don't overlap — no single constant adjustment works; reference file hashes unchanged.
 - Next: decode `loops` and reproduce golden Type 4 `POSITION_MARK` elements.
 - Blocked/Notes: per-track adjustment is found via interval intersection: for each cue, feasible adj = `[golden - 0.0005 - raw_time, golden + 0.0005 - raw_time]`; midpoint of intersection is used; 3 unmatchable tracks have disjoint intervals (differ by ~0.001ms); WAV tracks at 44100 Hz have adj near zero; MP3 tracks vary 0 to +0.065s.
+
+## 2026-07-19 — Decode loops blob and emit Type 4 POSITION_MARK elements
+- Did: added `decode_loops` and `compute_loop_marks` to `converter/track.py`; added loop decoding tests to `tests/test_track.py`.
+- Verified: 68 tests pass; 1 loop decoded correctly (track 12868, "Loop 1", Start=144.467, End=144.48, ARGB matches golden); all 293 tracks checked — only 1 has a Type 4 loop in golden XML; reference file hashes unchanged.
+- Next: decode `beatData`, derive the exact MIXO beat-grid adjustment, and emit `TEMPO`.
+- Blocked/Notes: loop blob format is NOT zlib-compressed — raw binary with uint64 LE header (num_slots), per-slot: 1-byte label_len, UTF-8 label, 8-byte LE float64 start (samples), 8-byte LE float64 end (samples), 2-byte unknown, 4-byte BE ARGB; loop positions use the same per-track timing adjustment as cues.
