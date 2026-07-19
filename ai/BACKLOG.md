@@ -18,7 +18,7 @@ A human must create a baseline commit containing the intended project setup, the
 ## Next
 
 - [x] Characterize every scalar `TRACK` attribute across all 293 source/golden pairs, including sequential occurrence-based `TrackID`, missing-field rules, BPM, key, duration, and numeric representation; record only exact mappings.
-- [ ] Decode and test `trackData`; derive exact sample rate and `TotalTime` mapping for every selected track with no tolerance.
+- [x] Decode and test `trackData`; derive exact sample rate and `TotalTime` mapping for every selected track with no tolerance.
 - [ ] Implement the scalar track model and metadata mappings; unit-test all 293 tracks against the golden model.
 - [ ] Characterize and implement exact Engine path-to-Rekordbox `Location` mapping across all 293 tracks, isolating the `/Users/yeahboi` fixture root.
 - [ ] Generate the document header and scalar-only `COLLECTION`; pass exact comparison for structure and scalar track attributes.

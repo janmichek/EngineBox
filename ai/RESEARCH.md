@@ -63,3 +63,7 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
   - `Track.key` → `Tonality` (even k → `{k/2+1}d`, odd k → `{floor(k/2)+1}m`)
   - `Track.label` → `Label` (None → omit attribute)
   - `Track.sampleRate` → `SampleRate` (hardcoded 44100 for all tracks)
+- `PerformanceData.trackData` blob structure: 4-byte BE prefix (uncompressed length) + zlib data. Decompressed trackData starts with 8-byte BE double (sample rate, always 44100.0), followed by additional fields.
+- `PerformanceData.beatData` blob structure: same 4-byte BE prefix + zlib. Decompressed beatData starts with 8-byte BE double (sample rate) + 8-byte BE double (total samples). `TotalTime = total_samples / sample_rate` for exact-match tracks.
+- For 235 of 293 tracks, golden `TotalTime` equals `Track.length` (integer).
+- For 58 tracks, golden `TotalTime` has decimal places. Of these, 9 match `total_samples / sample_rate` exactly, but 49 have a small per-track offset (typically 0.025–0.052 seconds), suggesting the same per-track timing adjustment applies to TotalTime as to cue/loop/tempo positions.

@@ -55,3 +55,9 @@ Newest entry last. Never edit past entries.
 - Verified: location mapping confirmed (../../ → Users/yeahboi/); key mapping confirmed (even→d, odd→m); comment handling documented (12 tracks get MIXO-added 'Purchased at Beatport', long comments truncated to 247 chars).
 - Next: decode and test trackData; derive exact sample rate and TotalTime mapping.
 - Blocked/Notes: 58 tracks have decimal TotalTime from trackData blob (source length is integer); 106 tracks missing BitRate; sample rate is always 44100.
+
+## 2026-07-19 — Decode trackData and beatData blobs
+- Did: decoded trackData and beatData blobs (4-byte BE prefix + zlib); confirmed sample rate 44100.0 from first 8 bytes; derived TotalTime = total_samples / sample_rate from beatData.
+- Verified: 235 tracks match Track.length exactly (integer); 9 decimal tracks match beatData computation; 49 decimal tracks have small per-track offset (0.025–0.052s) matching the known timing adjustment.
+- Next: implement the scalar track model and metadata mappings.
+- Blocked/Notes: the 49 tracks with offset need the same per-track timing adjustment as cues/loops/tempo.
