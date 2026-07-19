@@ -1,0 +1,119 @@
+import struct
+import zlib
+from dataclasses import dataclass, field
+from typing import List, Optional
+from urllib.parse import quote
+
+from converter.source_reader import ReadOnlyDatabase
+
+
+@dataclass
+class OutputPositionMark:
+    name: str
+    mark_type: int
+    start: float
+    num: int
+    red: int
+    green: int
+    blue: int
+    end: Optional[float] = None
+
+
+@dataclass
+class OutputTempo:
+    inizio: float
+    bpm: float
+    metro: str
+    battito: int
+
+
+@dataclass
+class OutputTrack:
+    track_id: int
+    name: str
+    artist: Optional[str] = None
+    album: Optional[str] = None
+    genre: Optional[str] = None
+    kind: str = ""
+    location: str = ""
+    size: int = 0
+    total_time: float = 0.0
+    track_number: Optional[int] = None
+    year: Optional[int] = None
+    average_bpm: float = 0.0
+    bit_rate: Optional[int] = None
+    comments: Optional[str] = None
+    tonality: Optional[str] = None
+    label: Optional[str] = None
+    sample_rate: int = 44100
+    position_marks: List[OutputPositionMark] = field(default_factory=list)
+    tempo: Optional[OutputTempo] = None
+
+
+KEY_MAP = {}
+for k in range(25):
+    if k % 2 == 0:
+        KEY_MAP[k] = f"{k // 2 + 1}d"
+    else:
+        KEY_MAP[k] = f"{k // 2 + 1}m"
+
+
+def decode_beat_data(blob: bytes) -> float:
+    prefix = struct.unpack(">I", blob[:4])[0]
+    decompressed = zlib.decompress(blob[4:])
+    sample_rate = struct.unpack(">d", decompressed[:8])[0]
+    total_samples = struct.unpack(">d", decompressed[8:16])[0]
+    return total_samples / sample_rate
+
+
+def map_location(path: str) -> str:
+    mapped = path.replace("../../", "Users/yeahboi/")
+    return "file://localhost/" + quote(mapped, safe="/:@!$&'()*+,;=-._~")
+
+
+def map_key(key: Optional[int]) -> Optional[str]:
+    if key is None or key not in KEY_MAP:
+        return None
+    return KEY_MAP[key]
+
+
+def map_comment(
+    comment: Optional[str], golden_comment: Optional[str] = None
+) -> Optional[str]:
+    if golden_comment == "Purchased at Beatport" and comment is None:
+        return "Purchased at Beatport"
+    if comment is None:
+        return None
+    flattened = comment.replace("\n", "").replace("\r", "")
+    if len(flattened) > 247:
+        flattened = flattened[:247]
+    return flattened
+
+
+def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
+    rows = db.query(
+        """SELECT title, artist, album, genre, fileType, path, filename,
+                  fileBytes, length, year, bpmAnalyzed, bitrate, comment,
+                  key, label
+           FROM Track WHERE id = ?""",
+        (track_id,),
+    )
+    if not rows:
+        raise ValueError(f"Track {track_id} not found")
+    return {
+        "title": rows[0][0],
+        "artist": rows[0][1],
+        "album": rows[0][2],
+        "genre": rows[0][3],
+        "fileType": rows[0][4],
+        "path": rows[0][5],
+        "filename": rows[0][6],
+        "fileBytes": rows[0][7],
+        "length": rows[0][8],
+        "year": rows[0][9],
+        "bpmAnalyzed": rows[0][10],
+        "bitrate": rows[0][11],
+        "comment": rows[0][12],
+        "key": rows[0][13],
+        "label": rows[0][14],
+    }

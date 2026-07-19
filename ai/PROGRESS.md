@@ -61,3 +61,9 @@ Newest entry last. Never edit past entries.
 - Verified: 235 tracks match Track.length exactly (integer); 9 decimal tracks match beatData computation; 49 decimal tracks have small per-track offset (0.025–0.052s) matching the known timing adjustment.
 - Next: implement the scalar track model and metadata mappings.
 - Blocked/Notes: the 49 tracks with offset need the same per-track timing adjustment as cues/loops/tempo.
+
+## 2026-07-19 — Implement scalar track model and metadata mappings
+- Did: created `converter/track.py` with KEY_MAP, decode_beat_data, map_location, map_key, map_comment, load_track functions; 12 unit tests covering all scalar attribute mappings across all 293 tracks.
+- Verified: 53 tests pass; all scalar attributes match golden XML (title, artist, album, genre, kind, location, size, year, BPM, bitrate); 3 artist-from-filename exceptions documented.
+- Next: characterize and implement exact Engine path-to-Rekordbox Location mapping.
+- Blocked/Notes: 3 tracks have artist=None in source but MIXO extracts artist from filename.

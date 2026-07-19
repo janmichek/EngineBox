@@ -63,6 +63,7 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
   - `Track.key` → `Tonality` (even k → `{k/2+1}d`, odd k → `{floor(k/2)+1}m`)
   - `Track.label` → `Label` (None → omit attribute)
   - `Track.sampleRate` → `SampleRate` (hardcoded 44100 for all tracks)
+- 3 tracks have `artist=None` in source but MIXO extracts artist from filename (e.g., "Honey T - Sunchain.wav" → Artist="Honey T").
 - `PerformanceData.trackData` blob structure: 4-byte BE prefix (uncompressed length) + zlib data. Decompressed trackData starts with 8-byte BE double (sample rate, always 44100.0), followed by additional fields.
 - `PerformanceData.beatData` blob structure: same 4-byte BE prefix + zlib. Decompressed beatData starts with 8-byte BE double (sample rate) + 8-byte BE double (total samples). `TotalTime = total_samples / sample_rate` for exact-match tracks.
 - For 235 of 293 tracks, golden `TotalTime` equals `Track.length` (integer).
