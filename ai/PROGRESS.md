@@ -109,3 +109,9 @@ Newest entry last. Never edit past entries.
 - Verified: 68 tests pass before and after; reference file SHA-256 hashes unchanged (m.db 2fbb2167…, rekordbox.xml eab15ebd…); git diff touches only ai/ docs.
 - Next: human decision required — choose how `Inizio` is handled: (a) emit the best Engine-derived value (beat-0 grid + per-track cue timing adjustment) and exempt only `Inizio` from the exact golden comparison, or (b) another approach the user prefers. Backlog task "Decode beatData… emit TEMPO" stays unchecked until decided.
 - Blocked/Notes: Bpm, Metro (4/4), and Battito (1) are exactly derivable for all 293 tracks and stay under exact comparison. The blocker is only the Inizio phase, which is the output of MIXO's proprietary DSP re-analysis, not a database transformation.
+
+## 2026-07-19 — Add HTTP API server and React UI
+- Did: created `server.py` (Python HTTP server on port 8787 with `/api/playlists`, `/api/status`, `/api/convert` endpoints); refactored `convert.py` to expose `do_convert()` and `convert_with_playlists()` for API use; scaffolded React UI in `ui/` with Vite (playlist selector with checkboxes, convert button, progress/status display, download link); added npm scripts (`server`, `ui:dev`, `ui:build`) to `package.json`.
+- Verified: 68 Python tests pass; React UI builds successfully; reference file hashes unchanged (m.db 2fbb216…, rekordbox.xml eab15eb…).
+- Next: end-to-end test of server + UI flow; update backlog.
+- Blocked/Notes: UI proxies API calls to localhost:8787 during dev; server serves built UI from `ui/dist/` in production.

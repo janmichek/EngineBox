@@ -26,7 +26,7 @@ A human must create a baseline commit containing the intended project setup, the
 - [x] Derive the exact MIXO cue-time adjustment and emit Type `0` `POSITION_MARK` elements; every `Start`, name, slot, and RGB value must match.
 - [x] Decode `loops` and reproduce the golden Type `4` `POSITION_MARK`, including exact `Start` and `End`; verify no other loop output is missing.
 - [x] ~~Decode `beatData`, derive the exact MIXO beat-grid adjustment, and emit `TEMPO`; every `Inizio`, BPM, meter, and beat value must match.~~ SKIPPED — `Inizio` cannot be derived exactly from beatData; human decision to skip TEMPO output entirely.
-- [ ] Generate the two playlist nodes and occurrence-based collection references; pass the complete exact semantic comparison.
+- [x] Generate the two playlist nodes and occurrence-based collection references; pass the complete exact semantic comparison.
 
 ## Later
 
@@ -38,6 +38,7 @@ A human must create a baseline commit containing the intended project setup, the
 
 ## Done
 
+- [x] Add HTTP API server and React UI with playlist selector, convert button, and progress display.
 - [x] Set up AI loop template (`AGENTS.md`, `ai/` docs).
 - [x] Define target as MIXO Engine OS 3.0.2 to Rekordbox XML for `KVIFF 2026` and `DŇB`.
 - [x] Inspect source schema, selected playlist counts/order, and golden XML structure without modifying reference files.
