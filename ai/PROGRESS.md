@@ -67,3 +67,9 @@ Newest entry last. Never edit past entries.
 - Verified: 53 tests pass; all scalar attributes match golden XML (title, artist, album, genre, kind, location, size, year, BPM, bitrate); 3 artist-from-filename exceptions documented.
 - Next: characterize and implement exact Engine path-to-Rekordbox Location mapping.
 - Blocked/Notes: 3 tracks have artist=None in source but MIXO extracts artist from filename.
+
+## 2026-07-19 — Confirm path-to-Location mapping
+- Did: verified map_location implementation (../../ → Users/yeahboi/, URL-encode, file://localhost/ prefix) matches golden XML for all 293 tracks.
+- Verified: test_location_matches_golden_all_tracks passes with 0 mismatches; reference file hashes unchanged.
+- Next: generate the document header and scalar-only COLLECTION.
+- Blocked/Notes: path mapping fully characterized and implemented.
