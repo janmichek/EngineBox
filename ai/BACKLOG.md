@@ -9,7 +9,7 @@ A human must create a baseline commit containing the intended project setup, the
 ## Now
 
 - [x] Add repository safety ignores for `databases/`, `output/`, `.DS_Store`, Python caches, and virtual environments; verify neither reference file can be staged.
-- [ ] Scaffold `tests/` and a Python smoke test so `python3 -m unittest discover -s tests` is green without reading the full database.
+- [x] Scaffold `tests/` and a Python smoke test so `python3 -m unittest discover -s tests` is green without reading the full database.
 - [ ] Build a golden XML parser that normalizes the reference document into collection tracks, cue/tempo data, and ordered playlists.
 - [ ] Implement an exact semantic comparator with focused mismatch output; prove it ignores XML formatting and equivalent numeric representation but rejects every changed value and uses no tolerances.
 - [ ] Build a read-only source reader that opens an Engine SQLite path with `mode=ro`, validates schema 3.0.2, and rejects missing or incompatible databases.

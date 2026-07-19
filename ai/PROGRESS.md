@@ -19,3 +19,9 @@ Newest entry last. Never edit past entries.
 - Verified: the golden XML has 1,060 position marks including one Type 4 loop; configuration consistently requires exact values and read-only references.
 - Next: create a human-approved baseline commit, then scaffold Python tests as loop iteration 1.
 - Blocked/Notes: autonomous loops intentionally cannot start while the repository has no baseline commit or has staged/uncommitted setup files.
+
+## 2026-07-19 — Scaffold tests/ and Python smoke test
+- Did: created `tests/__init__.py` and `tests/test_smoke.py` with three smoke tests (standard library imports, database read-only access, golden XML parse).
+- Verified: `python3 -m unittest discover -s tests` passes (3 tests); reference file hashes unchanged.
+- Next: build a golden XML parser that normalizes the reference document into collection tracks, cue/tempo data, and ordered playlists.
+- Blocked/Notes: SQLite PRAGMA schema_version returns 2, not 30002; the "3.0.2" is the Engine DJ schema version, not the SQLite internal version.
