@@ -16,7 +16,7 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 - [ ] How does MIXO derive exact decimal `TotalTime` values?
 - [x] Is `/Users/yeahboi` path-root rewriting required, or can the correct root be derived?
 - [ ] Which Engine beat-grid marker becomes the single MIXO `TEMPO` element?
-- [ ] How does MIXO apply the exact per-track timing adjustment to cue, loop, and tempo positions?
+- [x] How does MIXO apply the exact per-track timing adjustment to cue, loop, and tempo positions?
 - [ ] Does every selected track use the same Engine 3.0.2 blob layout?
 
 ## Experiments

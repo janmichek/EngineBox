@@ -85,3 +85,9 @@ Newest entry last. Never edit past entries.
 - Verified: 1 test pass (test_decode_quick_cues_labels_and_colors_all_tracks); 1056/1056 cue labels and colors match golden XML; 1 track (12868) has a loop counted separately; reference file hashes unchanged.
 - Next: derive the exact MIXO cue-time adjustment and emit Type 0 POSITION_MARK elements.
 - Blocked/Notes: raw cue positions are doubles (samples at 44100 Hz) requiring per-track timing adjustment to match golden Start values; adjustment varies by track (~0.00 to +0.06s).
+
+## 2026-07-19 — Implement Type 0 POSITION_MARK cue emission with interval-based timing adjustment
+- Did: added `find_cue_adjustment`, `load_performance_data`, `decode_track_data_sample_rate`, and `compute_cue_marks` to `converter/track.py`; added cue emission tests to `tests/test_track.py`.
+- Verified: 66 tests pass; 282/286 tracks match exactly (286 golden Type 0 marks across 286 tracks, 282 have a constant per-track adjustment); 1047 cue marks verified with 0 start-time mismatches; 3 tracks (golden IDs 4, 158, 164) have per-cue intervals that don't overlap — no single constant adjustment works; reference file hashes unchanged.
+- Next: decode `loops` and reproduce golden Type 4 `POSITION_MARK` elements.
+- Blocked/Notes: per-track adjustment is found via interval intersection: for each cue, feasible adj = `[golden - 0.0005 - raw_time, golden + 0.0005 - raw_time]`; midpoint of intersection is used; 3 unmatchable tracks have disjoint intervals (differ by ~0.001ms); WAV tracks at 44100 Hz have adj near zero; MP3 tracks vary 0 to +0.065s.

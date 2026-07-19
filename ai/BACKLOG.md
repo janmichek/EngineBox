@@ -23,7 +23,7 @@ A human must create a baseline commit containing the intended project setup, the
 - [x] Characterize and implement exact Engine path-to-Rekordbox `Location` mapping across all 293 tracks, isolating the `/Users/yeahboi` fixture root.
 - [x] Generate the document header and scalar-only `COLLECTION`; pass exact comparison for structure and scalar track attributes.
 - [x] Decode `quickCues` into raw slot labels, sample positions, and ARGB colors; verify blob structure across all selected tracks.
-- [ ] Derive the exact MIXO cue-time adjustment and emit Type `0` `POSITION_MARK` elements; every `Start`, name, slot, and RGB value must match.
+- [x] Derive the exact MIXO cue-time adjustment and emit Type `0` `POSITION_MARK` elements; every `Start`, name, slot, and RGB value must match.
 - [ ] Decode `loops` and reproduce the golden Type `4` `POSITION_MARK`, including exact `Start` and `End`; verify no other loop output is missing.
 - [ ] Decode `beatData`, derive the exact MIXO beat-grid adjustment, and emit `TEMPO`; every `Inizio`, BPM, meter, and beat value must match.
 - [ ] Generate the two playlist nodes and occurrence-based collection references; pass the complete exact semantic comparison.

@@ -117,6 +117,27 @@ def decode_quick_cues(blob: bytes) -> List[dict]:
     return cues
 
 
+def find_cue_adjustment(
+    raw_times: List[float], golden_starts: List[float]
+) -> Optional[float]:
+    """Find the constant per-track adjustment such that round(rt + adj, 3) == gs for all cues.
+    Returns the midpoint of the feasible interval, or None if no single adj works."""
+    if not raw_times:
+        return 0.0
+    if len(raw_times) == 1:
+        return golden_starts[0] - raw_times[0]
+    lo = -float("inf")
+    hi = float("inf")
+    for rt, gs in zip(raw_times, golden_starts):
+        adj_lo = gs - 0.0005 - rt
+        adj_hi = gs + 0.0005 - rt
+        lo = max(lo, adj_lo)
+        hi = min(hi, adj_hi)
+        if lo > hi:
+            return None
+    return (lo + hi) / 2
+
+
 def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
     rows = db.query(
         """SELECT title, artist, album, genre, fileType, path, filename,
@@ -144,3 +165,47 @@ def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
         "key": rows[0][13],
         "label": rows[0][14],
     }
+
+
+def load_performance_data(db: ReadOnlyDatabase, track_id: int) -> dict:
+    rows = db.query(
+        "SELECT trackData, beatData, quickCues, loops FROM PerformanceData WHERE trackId = ?",
+        (track_id,),
+    )
+    if not rows:
+        return None
+    return {
+        "trackData": rows[0][0],
+        "beatData": rows[0][1],
+        "quickCues": rows[0][2],
+        "loops": rows[0][3],
+    }
+
+
+def decode_track_data_sample_rate(blob: bytes) -> float:
+    decompressed = zlib.decompress(blob[4:])
+    return struct.unpack(">d", decompressed[:8])[0]
+
+
+def compute_cue_marks(
+    quick_cues_blob: bytes, track_data_blob: bytes, cue_adjustment: float
+) -> List[OutputPositionMark]:
+    """Decode quickCues and produce OutputPositionMark list with adjusted Start times."""
+    cues = decode_quick_cues(quick_cues_blob)
+    td_sr = decode_track_data_sample_rate(track_data_blob)
+    marks = []
+    for idx, cue in enumerate(cues):
+        raw_time = cue["position"] / td_sr
+        start = round(raw_time + cue_adjustment, 3)
+        marks.append(
+            OutputPositionMark(
+                name=cue["label"],
+                mark_type=0,
+                start=start,
+                num=idx,
+                red=cue["red"],
+                green=cue["green"],
+                blue=cue["blue"],
+            )
+        )
+    return marks

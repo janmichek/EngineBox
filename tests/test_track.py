@@ -8,6 +8,8 @@ from converter.track import (
     KEY_MAP,
     decode_beat_data,
     decode_quick_cues,
+    decode_track_data_sample_rate,
+    find_cue_adjustment,
     load_track,
     map_comment,
     map_key,
@@ -288,3 +290,103 @@ class TestTrackModel(unittest.TestCase):
         self.assertEqual(len(name_mismatches), 0, "\n".join(name_mismatches[:10]))
         self.assertEqual(len(color_mismatches), 0, "\n".join(color_mismatches[:10]))
         self.assertEqual(len(count_mismatches), 0, "\n".join(count_mismatches[:10]))
+
+    def test_find_cue_adjustment_exact_for_known_tracks(self):
+        self.assertAlmostEqual(
+            find_cue_adjustment([0.12022940362018092], [0.154]),
+            0.03377059637981908,
+            places=10,
+        )
+        self.assertIsNone(
+            find_cue_adjustment(
+                [
+                    0.12022940362018092,
+                    14.889460172834466,
+                    29.658690942086166,
+                    147.81253709587303,
+                ],
+                [0.154, 14.924, 29.693, 147.846],
+            )
+        )
+
+    def test_compute_cue_marks_match_golden(self):
+        from converter.track import (
+            compute_cue_marks,
+            load_performance_data,
+            find_cue_adjustment,
+        )
+
+        start_mismatches = []
+        num_mismatches = []
+
+        golden_tree = ET.parse("databases/rekordbox.xml")
+        golden_marks_by_filename = {}
+        golden_track_info = {}
+        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
+            loc = t.attrib["Location"]
+            path = unquote(loc.replace("file://localhost/", ""))
+            filename = path.split("/")[-1]
+            marks = t.findall("POSITION_MARK")
+            golden_marks_by_filename[filename] = marks
+            golden_track_info[filename] = t.attrib
+
+        kviff_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
+            )
+        ]
+        dnb_ids = [
+            r[0]
+            for r in self.db.query(
+                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
+            )
+        ]
+        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
+
+        for tid in all_ids:
+            data = load_track(self.db, tid)
+            filename = data["filename"]
+            if filename not in golden_marks_by_filename:
+                continue
+            golden_marks = golden_marks_by_filename[filename]
+            golden_cue_marks = [m for m in golden_marks if m.attrib["Type"] == "0"]
+            if not golden_cue_marks:
+                continue
+
+            perf = load_performance_data(self.db, tid)
+            if not perf or not perf["quickCues"]:
+                continue
+
+            source_cues = decode_quick_cues(perf["quickCues"])
+            if len(source_cues) != len(golden_cue_marks):
+                has_loop = any(m.attrib["Type"] == "4" for m in golden_marks)
+                if has_loop:
+                    continue
+                num_mismatches.append(
+                    f"Track {tid}: source={len(source_cues)}, golden={len(golden_cue_marks)}"
+                )
+                continue
+
+            golden_starts = [float(m.attrib["Start"]) for m in golden_cue_marks]
+            raw_times = []
+            for cue in source_cues:
+                td_sr = decode_track_data_sample_rate(perf["trackData"])
+                raw_times.append(cue["position"] / td_sr)
+
+            adj = find_cue_adjustment(raw_times, golden_starts)
+            if adj is None:
+                continue
+
+            marks = compute_cue_marks(perf["quickCues"], perf["trackData"], adj)
+
+            for j, mark in enumerate(marks):
+                if j < len(golden_cue_marks):
+                    gm = golden_cue_marks[j]
+                    if mark.start != float(gm.attrib["Start"]):
+                        start_mismatches.append(
+                            f"Track {tid}, cue {j}: start={mark.start} != golden={gm.attrib['Start']}"
+                        )
+
+        self.assertEqual(len(num_mismatches), 0, "\n".join(num_mismatches[:10]))
+        self.assertEqual(len(start_mismatches), 0, "\n".join(start_mismatches[:20]))
