@@ -35,6 +35,7 @@ Working notes on the original convertor. Hypotheses live here; once confirmed, p
 - The reference converter is MIXO, converting Engine DJ/Engine OS library data to Rekordbox XML.
 - The source is an Engine schema 3.0.2 SQLite database.
 - SQLite PRAGMA schema_version returns 2, not 30002; the "3.0.2" is the Engine DJ schema version, not the SQLite internal version.
+- 106 of 293 tracks in golden XML have no BitRate attribute; the field is optional.
 - Scope is exactly `KVIFF 2026` (playlist ID 708, 178 tracks) and `DŇB` (playlist ID 11, 115 tracks).
 - Playlist names are hardcoded product scope; fixture IDs are observations, not selection logic.
 - The playlists have 293 distinct tracks, matching the golden XML collection count.

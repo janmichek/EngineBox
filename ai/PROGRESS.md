@@ -25,3 +25,9 @@ Newest entry last. Never edit past entries.
 - Verified: `python3 -m unittest discover -s tests` passes (3 tests); reference file hashes unchanged.
 - Next: build a golden XML parser that normalizes the reference document into collection tracks, cue/tempo data, and ordered playlists.
 - Blocked/Notes: SQLite PRAGMA schema_version returns 2, not 30002; the "3.0.2" is the Engine DJ schema version, not the SQLite internal version.
+
+## 2026-07-19 — Build golden XML parser
+- Did: created `converter/golden_parser.py` with dataclasses for Track, PositionMark, Tempo, Playlist, GoldenModel; parses all 293 tracks, 1060 position marks, 2 playlists.
+- Verified: 16 unit tests pass; BitRate is optional (106 tracks missing it); reference file hashes unchanged.
+- Next: implement an exact semantic comparator with focused mismatch output.
+- Blocked/Notes: 106 of 293 tracks have no BitRate attribute in golden XML.
