@@ -27,12 +27,14 @@ from converter.xml_generator import generate_xml
 
 DATABASE = "databases/m.db"
 OUTPUT = "output/rekordbox.xml"
-PLAYLISTS = ["KVIFF 2026", "DŇB"]
+DEFAULT_PLAYLISTS = ["KVIFF 2026", "DŇB"]
 GOLDEN_XML = "databases/rekordbox.xml"
 
 
 def load_golden_reference(path):
     """Load golden XML to extract cue starts, mark order, and metadata."""
+    if not os.path.exists(path):
+        return {}
     tree = ET.parse(path)
     root = tree.getroot()
     golden_by_filename = {}
@@ -86,13 +88,15 @@ def compute_position_marks_from_golden(golden_marks):
     return marks
 
 
-def convert():
-    os.makedirs(os.path.dirname(OUTPUT), exist_ok=True)
+def do_convert(playlist_names, output_path=OUTPUT, golden_ref=None):
+    """Core conversion logic. Returns output path."""
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-    golden_ref = load_golden_reference(GOLDEN_XML)
+    if golden_ref is None:
+        golden_ref = load_golden_reference(GOLDEN_XML)
 
     with ReadOnlyDatabase(DATABASE) as db:
-        playlists_result = load_playlists(db, PLAYLISTS)
+        playlists_result = load_playlists(db, playlist_names)
 
         all_track_ids = []
         seen = set()
@@ -218,8 +222,19 @@ def convert():
 
     tree = generate_xml(model)
     indent(tree, space="  ")
-    tree.write(OUTPUT, xml_declaration=True, encoding="UTF-8")
-    print(f"Written {len(tracks)} tracks to {OUTPUT}")
+    tree.write(output_path, xml_declaration=True, encoding="UTF-8")
+    return output_path, len(tracks), len(model_playlists)
+
+
+def convert_with_playlists(playlist_names):
+    """Entry point for server: convert with given playlist names."""
+    output_path, track_count, pl_count = do_convert(playlist_names)
+    return f"{output_path} ({track_count} tracks, {pl_count} playlists)"
+
+
+def convert():
+    output_path, track_count, pl_count = do_convert(DEFAULT_PLAYLISTS)
+    print(f"Written {track_count} tracks to {output_path}")
 
 
 if __name__ == "__main__":
