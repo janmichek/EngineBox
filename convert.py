@@ -26,9 +26,10 @@ from converter.track import (
 from converter.xml_generator import generate_xml
 
 DATABASE = "databases/m.db"
-OUTPUT = "output/rekordbox.xml"
+OUTPUT = os.path.expanduser("~/Downloads/rekordbox.xml")
 DEFAULT_PLAYLISTS = ["KVIFF 2026", "DŇB"]
 GOLDEN_XML = "databases/rekordbox.xml"
+DEFAULT_DB = "/Users/yeahboi/Music/Engine Library/Database2/m.db"
 
 
 def load_golden_reference(path):
@@ -88,14 +89,14 @@ def compute_position_marks_from_golden(golden_marks):
     return marks
 
 
-def do_convert(playlist_names, output_path=OUTPUT, golden_ref=None):
+def do_convert(playlist_names, output_path=OUTPUT, golden_ref=None, db_path=DATABASE):
     """Core conversion logic. Returns output path."""
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     if golden_ref is None:
         golden_ref = load_golden_reference(GOLDEN_XML)
 
-    with ReadOnlyDatabase(DATABASE) as db:
+    with ReadOnlyDatabase(db_path) as db:
         playlists_result = load_playlists(db, playlist_names)
 
         all_track_ids = []
@@ -232,9 +233,9 @@ def do_convert(playlist_names, output_path=OUTPUT, golden_ref=None):
     return output_path, len(tracks), len(model_playlists)
 
 
-def convert_with_playlists(playlist_names):
+def convert_with_playlists(playlist_names, db_path=DATABASE):
     """Entry point for server: convert with given playlist names."""
-    output_path, track_count, pl_count = do_convert(playlist_names)
+    output_path, track_count, pl_count = do_convert(playlist_names, db_path=db_path)
     return f"{output_path} ({track_count} tracks, {pl_count} playlists)"
 
 

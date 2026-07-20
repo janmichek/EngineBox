@@ -10,6 +10,11 @@ __pycache__/
 .venv/
 venv/
 
+# Build artifacts
+build/
+dist/
+dist-electron/
+
 # macOS
 .DS_Store
 

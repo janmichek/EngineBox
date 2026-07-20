@@ -9,12 +9,14 @@ import time
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-sys.path.insert(0, os.path.dirname(__file__))
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, BASE_DIR)
 
 from converter.source_reader import ReadOnlyDatabase
 from converter.playlist import load_playlists
 
 DATABASE = "databases/m.db"
+DEFAULT_DB = "/Users/yeahboi/Music/Engine Library/Database2/m.db"
 PORT = 8787
 
 conversion_state = {
@@ -40,7 +42,7 @@ def get_playlist_track_count(db, playlist_id):
     return rows[0][0] if rows else 0
 
 
-def run_conversion(selected_playlist_names):
+def run_conversion(selected_playlist_names, db_path=DATABASE):
     global conversion_state
     conversion_state = {
         "status": "running",
@@ -55,7 +57,7 @@ def run_conversion(selected_playlist_names):
 
         conversion_state["progress"] = 10
         conversion_state["message"] = "Loading database..."
-        output = convert_with_playlists(selected_playlist_names)
+        output = convert_with_playlists(selected_playlist_names, db_path=db_path)
         conversion_state = {
             "status": "done",
             "progress": 100,
@@ -95,7 +97,10 @@ class APIHandler(SimpleHTTPRequestHandler):
 
     def _handle_playlists(self):
         try:
-            with ReadOnlyDatabase(DATABASE) as db:
+            parsed = urlparse(self.path)
+            params = parse_qs(parsed.query)
+            db_path = params.get("db", [DATABASE])[0]
+            with ReadOnlyDatabase(db_path) as db:
                 playlists = get_all_playlists(db)
                 for p in playlists:
                     p["track_count"] = get_playlist_track_count(db, p["id"])
@@ -111,6 +116,7 @@ class APIHandler(SimpleHTTPRequestHandler):
         body = self.rfile.read(content_length)
         data = json.loads(body)
         selected = list(dict.fromkeys(data.get("playlists", [])))
+        db_path = data.get("db", DATABASE)
 
         if not selected:
             self._json_response(400, {"error": "No playlists selected"})
@@ -120,7 +126,9 @@ class APIHandler(SimpleHTTPRequestHandler):
             self._json_response(409, {"error": "Conversion already in progress"})
             return
 
-        thread = threading.Thread(target=run_conversion, args=(selected,), daemon=True)
+        thread = threading.Thread(
+            target=run_conversion, args=(selected, db_path), daemon=True
+        )
         thread.start()
         self._json_response(200, {"message": "Conversion started"})
 
@@ -134,7 +142,7 @@ class APIHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def _serve_react_app(self, path):
-        ui_dir = os.path.join(os.path.dirname(__file__), "ui", "dist")
+        ui_dir = os.path.join(BASE_DIR, "ui", "dist")
         if path == "/" or path == "":
             path = "/index.html"
 
@@ -149,7 +157,7 @@ class APIHandler(SimpleHTTPRequestHandler):
                 self.send_error(404, "UI not built. Run: npm run ui:build")
 
     def _serve_file(self, path):
-        file_path = os.path.join(os.path.dirname(__file__), path.lstrip("/"))
+        file_path = os.path.join(BASE_DIR, path.lstrip("/"))
         if os.path.isfile(file_path):
             self.send_file(file_path)
         else:

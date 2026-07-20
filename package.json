@@ -2,20 +2,58 @@
   "name": "convertor",
   "version": "1.0.0",
   "description": "Engine OS to Rekordbox XML converter",
-  "main": "convert.py",
+  "main": "electron/main.js",
   "scripts": {
     "convert": "python3 convert.py",
     "test": "python3 -m unittest discover -s tests",
+    "test:all": "npm run test && npm run test:e2e",
     "server": "python3 server.py",
     "ui:dev": "npm run dev --prefix ui",
     "ui:build": "npm run build --prefix ui",
     "dev": "concurrently \"npm run server\" \"npm run ui:dev\"",
     "test:e2e": "npx playwright test",
-    "test:e2e:ui": "npx playwright test --ui"
+    "test:e2e:ui": "npx playwright test --ui",
+    "electron:dev": "npm run ui:build && electron .",
+    "electron:build": "npm run ui:build && electron-builder --mac && xattr -dr com.apple.quarantine \"dist-electron/mac-arm64/Engine OS Converter.app\" && cp -R \"dist-electron/mac-arm64/Engine OS Converter.app\" /Applications/",
+    "electron:build:dir": "npm run ui:build && electron-builder --mac --dir"
   },
   "private": true,
+  "build": {
+    "appId": "com.convertor.engine-os-rekordbox",
+    "productName": "Engine OS Converter",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      "server.py",
+      "convert.py",
+      "launcher.py",
+      "converter/**/*",
+      "ui/dist/**/*",
+      "ui/public/**/*",
+      "databases/**/*",
+      "!**/node_modules/**",
+      "!**/__pycache__/**",
+      "!**/*.pyc"
+    ],
+    "asarUnpack": [
+      "server.py",
+      "convert.py",
+      "converter/**/*",
+      "ui/dist/**/*",
+      "databases/**/*"
+    ],
+    "mac": {
+      "target": "dir",
+      "category": "public.app-category.music",
+      "icon": "electron/icon.icns"
+    }
+  },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "concurrently": "^10.0.3"
+    "concurrently": "^10.0.3",
+    "electron": "^35.7.0",
+    "electron-builder": "^26.0.12"
   }
 }
