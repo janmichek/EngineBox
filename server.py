@@ -8,6 +8,7 @@ from http.server import HTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import parse_qs, urlparse
 
 from convert import DATABASE, do_convert
+from converter.playlist import list_playlists
 from converter.source_reader import ReadOnlyDatabase
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,17 +24,7 @@ conversion_state = {
 
 
 def get_all_playlists(db):
-    rows = db.query(
-        "SELECT id, title FROM Playlist WHERE title IS NOT NULL AND title != '' ORDER BY title"
-    )
-    return [{"id": r[0], "name": r[1]} for r in rows]
-
-
-def get_playlist_track_count(db, playlist_id):
-    rows = db.query(
-        "SELECT COUNT(*) FROM PlaylistEntity WHERE listId = ?", (playlist_id,)
-    )
-    return rows[0][0] if rows else 0
+    return list_playlists(db)
 
 
 def run_conversion(selected_playlist_names, db_path=DATABASE):
@@ -102,8 +93,6 @@ class APIHandler(SimpleHTTPRequestHandler):
             db_path = params.get("db", [DATABASE])[0]
             with ReadOnlyDatabase(db_path) as db:
                 playlists = get_all_playlists(db)
-                for p in playlists:
-                    p["track_count"] = get_playlist_track_count(db, p["id"])
             self._json_response(200, {"playlists": playlists})
         except Exception as e:
             self._json_response(500, {"error": str(e)})

@@ -1,6 +1,6 @@
 import unittest
 from converter.source_reader import ReadOnlyDatabase
-from converter.playlist import find_playlist_by_name, load_playlists
+from converter.playlist import find_playlist_by_name, list_playlists, load_playlists
 
 
 class TestPlaylist(unittest.TestCase):
@@ -54,3 +54,23 @@ class TestPlaylist(unittest.TestCase):
             "SELECT title FROM Track WHERE id = ?", (playlist.track_ids[0],)
         )
         self.assertEqual(rows[0][0], "Finish Line (Original Mix)")
+
+    def test_list_playlists_skips_empty_duplicates(self):
+        playlists = list_playlists(self.db)
+        names = [p["name"] for p in playlists]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertTrue(all(p["track_count"] > 0 for p in playlists))
+        self.assertNotIn(0, [p["track_count"] for p in playlists])
+
+        solid = [p for p in playlists if p["name"] == "SOLID"]
+        self.assertEqual(len(solid), 1)
+        self.assertEqual(solid[0]["track_count"], 1077)
+
+        river = [p for p in playlists if p["name"] == "RIVER"]
+        self.assertEqual(len(river), 1)
+        self.assertEqual(river[0]["track_count"], 451)
+
+    def test_find_playlist_prefers_populated_duplicate(self):
+        playlist = find_playlist_by_name(self.db, "SOLID")
+        self.assertEqual(playlist.playlist_id, 13)
+        self.assertEqual(len(playlist.track_ids), 1077)

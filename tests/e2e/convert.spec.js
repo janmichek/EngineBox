@@ -9,6 +9,27 @@ test.describe('EngineBox UI', () => {
     expect(count).toBeGreaterThan(0);
   });
 
+  test('shows each playlist once with tracks', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('main ul li').first()).toBeVisible({ timeout: 10_000 });
+
+    const items = page.locator('main ul li');
+    const count = await items.count();
+    const names = [];
+
+    for (let i = 0; i < count; i++) {
+      const item = items.nth(i);
+      const name = (await item.locator('span').textContent())?.trim();
+      const tracks = await item.locator('small').textContent();
+      expect(parseInt(tracks, 10)).toBeGreaterThan(0);
+      names.push(name);
+    }
+
+    expect(new Set(names).size).toBe(names.length);
+    expect(names.filter((name) => name === 'SOLID')).toHaveLength(1);
+    expect(names.filter((name) => name === 'RIVER')).toHaveLength(1);
+  });
+
   test('select all and convert all playlists', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('main ul li').first()).toBeVisible({ timeout: 10_000 });
