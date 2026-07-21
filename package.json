@@ -14,7 +14,7 @@
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "electron:dev": "npm run ui:build && electron .",
-    "electron:build": "npm run ui:build && electron-builder --mac && mkdir -p releases && cp dist-electron/*.zip releases/ && xattr -dr com.apple.quarantine releases/*.zip",
+    "electron:build": "npm run ui:build && electron-builder --mac && mkdir -p releases && cp dist-electron/*.dmg releases/ && xattr -dr com.apple.quarantine releases/*.dmg",
     "electron:build:dir": "npm run ui:build && electron-builder --mac --dir"
   },
   "private": true,
@@ -43,7 +43,7 @@
       "databases/**/*"
     ],
     "mac": {
-      "target": "zip",
+      "target": "dmg",
       "category": "public.app-category.music",
       "icon": "electron/icon.icns"
     }

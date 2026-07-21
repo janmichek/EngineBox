@@ -35,12 +35,7 @@ Validated against a golden reference exported by one of the paid convertor for t
 
 **Download (macOS)**
 
-Grab the latest build from `releases/`:
-
-```bash
-# unzip and move to Applications
-unzip releases/EngineBox-1.0.0-arm64-mac.zip -d /Applications
-```
+Download `EngineBox-1.0.0-arm64.dmg` from `releases/`, open it, and drag EngineBox to Applications.
 
 **CLI**
 
