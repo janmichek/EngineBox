@@ -2,7 +2,7 @@
 
 Convert Engine OS playlists to Rekordbox XML - locally, for free.
 
-A weekend vibecode project done with AI Loops. Not a product. Not advice on how to build software.
+A weekend vibecode project done with AI Loops. Not a product. Not advice on how to build software. Just an utitlity that serves me and hopefully other djs.
 
 ## Converter
 
@@ -36,8 +36,6 @@ Validated against a golden reference exported by one of the paid converters for 
 ## Quick start
 
 **[Download for macOS](https://github.com/janmichek/EngineBox/releases/latest)**
-
-Download `EngineBox-1.0.0-arm64.dmg`, open it, and drag EngineBox to Applications.
 
 Feel free to shoot a prompt to compile Windows version. It should be fairly easy.
 
