@@ -15,7 +15,7 @@ Goal: replicate the in-scope behavior of MIXO's Engine OS to Rekordbox XML conve
 
 - One task per loop iteration. Small, complete, verified.
 - Start only from a clean working tree with an existing baseline commit. If either condition is false, stop without changing files.
-- Every change must leave the repo in a working state (`python3 -m unittest discover -s tests` passes).
+- Every change must leave the repo in a working state (`npm test` passes).
 - Do not rewrite or reorder other tasks in the backlog beyond marking yours done and adding newly discovered tasks at the appropriate priority.
 - Do not edit past entries in `ai/PROGRESS.md` or `ai/DECISIONS.md`.
 - Commit at the end of each iteration with message: `loop: <task summary>`.
@@ -27,7 +27,7 @@ Goal: replicate the in-scope behavior of MIXO's Engine OS to Rekordbox XML conve
 
 ## Project conventions
 
-- Runtime: Python 3 standard library unless a backlog task explicitly justifies a dependency.
-- Planned entry point: `convert.py`.
-- Tests: `python3 -m unittest discover -s tests`.
-- Full golden comparison: `python3 -m unittest tests.test_integration` when local reference files exist.
+- Runtime: Node.js standard library unless a backlog task explicitly justifies a dependency.
+- Entry point: `convert.js` (CLI) or `server.js` (HTTP server + UI).
+- Tests: `npm test`.
+- Full golden comparison: run integration tests when local reference files exist.

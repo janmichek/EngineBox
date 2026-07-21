@@ -115,3 +115,9 @@ Newest entry last. Never edit past entries.
 - Verified: 68 Python tests pass; React UI builds successfully; reference file hashes unchanged (m.db 2fbb216…, rekordbox.xml eab15eb…).
 - Next: end-to-end test of server + UI flow; update backlog.
 - Blocked/Notes: UI proxies API calls to localhost:8787 during dev; server serves built UI from `ui/dist/` in production.
+
+## 2026-07-19 — Clean up Python references in documentation
+- Did: updated `AGENTS.md`, `ai/SPEC.md`, `ai/LOOP.md`, `ai/BACKLOG.md`, `ai/DECISIONS.md` to replace Python references with Node.js equivalents. Deleted `electron/main.js` (old Python entry point).
+- Verified: `npm test` passes (70/70 tests); reference file hashes unchanged.
+- Next: complete remaining backlog items.
+- Blocked/Notes: historical entries in `ai/PROGRESS.md` intentionally left as-is since they document what actually happened.

@@ -11,6 +11,7 @@ Irreversible or hard-to-reverse choices, with rationale. Never edit past entries
 - Decision: implement the converter in Python 3, initially using `sqlite3`, `zlib`, `struct`, `urllib.parse`, and `xml.etree.ElementTree` from the standard library.
 - Why: Python is approved for this local script and supports SQLite, binary decoding, XML generation, and semantic test comparison without dependencies.
 - Revisit if: verified Engine 3.0.2 performance blobs cannot be decoded reliably with the documented formats.
+- Status: **Superseded** — reverted to Node.js + plain JS on 2026-07-19 (see first decision above).
 
 ## 2026-07-19 — Immutable local golden fixtures
 - Decision: keep `databases/m.db` and `databases/rekordbox.xml` as untracked, immutable local references; write generated files to `output/`.

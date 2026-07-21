@@ -6,7 +6,7 @@ Source of truth for what to build. Only confirmed behavior belongs here; hypothe
 
 - Replicate the relevant behavior of MIXO's Engine DJ to Rekordbox XML converter.
 - Input: the local Engine OS 3.0.2 SQLite library at `databases/m.db`.
-- Output: a Rekordbox-compatible XML file produced by a local Python CLI.
+- Output: a Rekordbox-compatible XML file produced by a local Node.js CLI.
 - Golden reference: `databases/rekordbox.xml`, previously exported by MIXO.
 - Scope: exactly the hardcoded root playlist names `KVIFF 2026` and `DŇB`.
 - Environment: this local macOS project only.

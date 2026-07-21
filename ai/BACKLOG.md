@@ -9,7 +9,7 @@ A human must create a baseline commit containing the intended project setup, the
 ## Now
 
 - [x] Add repository safety ignores for `databases/`, `output/`, `.DS_Store`, Python caches, and virtual environments; verify neither reference file can be staged.
-- [x] Scaffold `tests/` and a Python smoke test so `python3 -m unittest discover -s tests` is green without reading the full database.
+- [x] Scaffold `tests/` and a smoke test so `npm test` is green without reading the full database.
 - [x] Build a golden XML parser that normalizes the reference document into collection tracks, cue/tempo data, and ordered playlists.
 - [x] Implement an exact semantic comparator with focused mismatch output; prove it ignores XML formatting and equivalent numeric representation but rejects every changed value and uses no tolerances.
 - [x] Build a read-only source reader that opens an Engine SQLite path with `mode=ro`, validates schema 3.0.2, and rejects missing or incompatible databases.
@@ -30,7 +30,7 @@ A human must create a baseline commit containing the intended project setup, the
 
 ## Later
 
-- [ ] Add `convert.py` CLI with read-only database input, output defaulting to `output/rekordbox.xml`, and no playlist-selection options.
+- [ ] Add `convert.js` CLI with read-only database input, output defaulting to `output/rekordbox.xml`, and no playlist-selection options.
 - [ ] Add an integration test that snapshots hashes/metadata of both reference files, runs conversion, compares generated XML semantically, and proves the references were unchanged.
 - [ ] Exercise corrupt database, missing playlist, duplicate playlist title, and unwritable output errors without modifying the source.
 - [ ] Document the local command, expected output, golden verification command, and known Engine 3.0.2 limitation.

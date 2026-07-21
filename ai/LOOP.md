@@ -16,10 +16,10 @@ This is the prompt to give any agent, every iteration. It is agent-agnostic: no 
    - Record SHA-256 hashes of `databases/m.db` and `databases/rekordbox.xml`.
 2. **Orient** — Read `ai/SPEC.md` (what to build), `ai/BACKLOG.md` (what's next), last entries of `ai/PROGRESS.md` (what just happened), and relevant findings in `ai/RESEARCH.md`.
 3. **Pick** — Take the topmost unchecked task in `ai/BACKLOG.md`. If it is too big to finish in one iteration, split it in place and take only the first piece.
-4. **Verify first** — Run `python3 -m unittest discover -s tests` before changing anything. If it fails, restoring the green baseline is the only task for this iteration. If tests do not exist yet, only the backlog task that creates them may proceed.
+4. **Verify first** — Run `npm test` before changing anything. If it fails, restoring the green baseline is the only task for this iteration. If tests do not exist yet, only the backlog task that creates them may proceed.
 5. **Implement** — Do the task. Write or update tests that prove it works. Characterization tasks must turn golden-file observations into explicit assertions; do not guess or add tolerances.
 6. **Verify after** —
-   - `python3 -m unittest discover -s tests` must pass.
+   - `npm test` must pass.
    - Run the exact semantic golden comparison when relevant.
    - Recompute both reference-file SHA-256 hashes and require exact equality with preflight.
    - Inspect `git diff` and `git status` for unrelated changes.
