@@ -126,7 +126,7 @@ class APIHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def _serve_react_app(self, path):
-        ui_dir = os.path.join(BASE_DIR, "ui", "dist")
+        ui_dir = os.path.join(BASE_DIR, "dist")
         if path in ("/", ""):
             path = "/index.html"
 

@@ -24,8 +24,6 @@ dist-electron/
 
 # Node
 node_modules/
-ui/node_modules/
-ui/dist/
 
 # Playwright
 test-results/
