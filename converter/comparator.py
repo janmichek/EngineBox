@@ -1,5 +1,4 @@
-from dataclasses import fields
-from typing import Any, List, Tuple
+from typing import List, Sequence, Tuple
 
 from converter.golden_parser import GoldenModel, Playlist, PositionMark, Tempo, Track
 
@@ -24,6 +23,63 @@ class ComparisonResult:
         return "\n".join(lines)
 
 
+# (attribute name, XML label, format values with repr)
+FieldSpec = Sequence[Tuple[str, str, bool]]
+
+POSITION_MARK_FIELDS: FieldSpec = [
+    ("name", "Name", True),
+    ("mark_type", "Type", False),
+    ("start", "Start", False),
+    ("num", "Num", False),
+    ("red", "Red", False),
+    ("green", "Green", False),
+    ("blue", "Blue", False),
+    ("end", "End", False),
+]
+
+TEMPO_FIELDS: FieldSpec = [
+    ("inizio", "Inizio", False),
+    ("bpm", "Bpm", False),
+    ("metro", "Metro", True),
+    ("battito", "Battito", False),
+]
+
+TRACK_FIELDS: FieldSpec = [
+    ("track_id", "TrackID", False),
+    ("name", "Name", True),
+    ("artist", "Artist", True),
+    ("album", "Album", True),
+    ("genre", "Genre", True),
+    ("kind", "Kind", True),
+    ("location", "Location", True),
+    ("size", "Size", False),
+    ("total_time", "TotalTime", False),
+    ("track_number", "TrackNumber", False),
+    ("year", "Year", False),
+    ("average_bpm", "AverageBpm", False),
+    ("bit_rate", "BitRate", False),
+    ("comments", "Comments", True),
+    ("tonality", "Tonality", True),
+    ("label", "Label", True),
+    ("sample_rate", "SampleRate", False),
+]
+
+PLAYLIST_FIELDS: FieldSpec = [
+    ("name", "Name", True),
+    ("entries", "Entries", False),
+]
+
+
+def compare_fields(a, b, spec: FieldSpec, path: str, result: ComparisonResult):
+    for attr, label, use_repr in spec:
+        va, vb = getattr(a, attr), getattr(b, attr)
+        if va != vb:
+            if use_repr:
+                result.add(f"{path}.{label}: {va!r} != {vb!r}")
+            else:
+                result.add(f"{path}.{label}: {va} != {vb}")
+
+
 def compare_position_marks(
     marks_a: List[PositionMark],
     marks_b: List[PositionMark],
@@ -34,72 +90,16 @@ def compare_position_marks(
         result.add(f"{path}: position mark count {len(marks_a)} != {len(marks_b)}")
         return
     for i, (a, b) in enumerate(zip(marks_a, marks_b)):
-        p = f"{path}.POSITION_MARK[{i}]"
-        if a.name != b.name:
-            result.add(f"{p}.Name: {a.name!r} != {b.name!r}")
-        if a.mark_type != b.mark_type:
-            result.add(f"{p}.Type: {a.mark_type} != {b.mark_type}")
-        if a.start != b.start:
-            result.add(f"{p}.Start: {a.start} != {b.start}")
-        if a.num != b.num:
-            result.add(f"{p}.Num: {a.num} != {b.num}")
-        if a.red != b.red:
-            result.add(f"{p}.Red: {a.red} != {b.red}")
-        if a.green != b.green:
-            result.add(f"{p}.Green: {a.green} != {b.green}")
-        if a.blue != b.blue:
-            result.add(f"{p}.Blue: {a.blue} != {b.blue}")
-        if a.end != b.end:
-            result.add(f"{p}.End: {a.end} != {b.end}")
+        compare_fields(a, b, POSITION_MARK_FIELDS, f"{path}.POSITION_MARK[{i}]", result)
 
 
 def compare_tempos(a: Tempo, b: Tempo, path: str, result: ComparisonResult):
-    if a.inizio != b.inizio:
-        result.add(f"{path}.TEMPO.Inizio: {a.inizio} != {b.inizio}")
-    if a.bpm != b.bpm:
-        result.add(f"{path}.TEMPO.Bpm: {a.bpm} != {b.bpm}")
-    if a.metro != b.metro:
-        result.add(f"{path}.TEMPO.Metro: {a.metro!r} != {b.metro!r}")
-    if a.battito != b.battito:
-        result.add(f"{path}.TEMPO.Battito: {a.battito} != {b.battito}")
+    compare_fields(a, b, TEMPO_FIELDS, f"{path}.TEMPO", result)
 
 
 def compare_tracks(a: Track, b: Track, index: int, result: ComparisonResult):
     path = f"COLLECTION.TRACK[{index}]"
-    if a.track_id != b.track_id:
-        result.add(f"{path}.TrackID: {a.track_id} != {b.track_id}")
-    if a.name != b.name:
-        result.add(f"{path}.Name: {a.name!r} != {b.name!r}")
-    if a.artist != b.artist:
-        result.add(f"{path}.Artist: {a.artist!r} != {b.artist!r}")
-    if a.album != b.album:
-        result.add(f"{path}.Album: {a.album!r} != {b.album!r}")
-    if a.genre != b.genre:
-        result.add(f"{path}.Genre: {a.genre!r} != {b.genre!r}")
-    if a.kind != b.kind:
-        result.add(f"{path}.Kind: {a.kind!r} != {b.kind!r}")
-    if a.location != b.location:
-        result.add(f"{path}.Location: {a.location!r} != {b.location!r}")
-    if a.size != b.size:
-        result.add(f"{path}.Size: {a.size} != {b.size}")
-    if a.total_time != b.total_time:
-        result.add(f"{path}.TotalTime: {a.total_time} != {b.total_time}")
-    if a.track_number != b.track_number:
-        result.add(f"{path}.TrackNumber: {a.track_number} != {b.track_number}")
-    if a.year != b.year:
-        result.add(f"{path}.Year: {a.year} != {b.year}")
-    if a.average_bpm != b.average_bpm:
-        result.add(f"{path}.AverageBpm: {a.average_bpm} != {b.average_bpm}")
-    if a.bit_rate != b.bit_rate:
-        result.add(f"{path}.BitRate: {a.bit_rate} != {b.bit_rate}")
-    if a.comments != b.comments:
-        result.add(f"{path}.Comments: {a.comments!r} != {b.comments!r}")
-    if a.tonality != b.tonality:
-        result.add(f"{path}.Tonality: {a.tonality!r} != {b.tonality!r}")
-    if a.label != b.label:
-        result.add(f"{path}.Label: {a.label!r} != {b.label!r}")
-    if a.sample_rate != b.sample_rate:
-        result.add(f"{path}.SampleRate: {a.sample_rate} != {b.sample_rate}")
+    compare_fields(a, b, TRACK_FIELDS, path, result)
     compare_position_marks(a.position_marks, b.position_marks, path, result)
     if a.tempo is None and b.tempo is not None:
         result.add(f"{path}: missing TEMPO in A")
@@ -111,10 +111,7 @@ def compare_tracks(a: Track, b: Track, index: int, result: ComparisonResult):
 
 def compare_playlists(a: Playlist, b: Playlist, index: int, result: ComparisonResult):
     path = f"PLAYLISTS.NODE[{index}]"
-    if a.name != b.name:
-        result.add(f"{path}.Name: {a.name!r} != {b.name!r}")
-    if a.entries != b.entries:
-        result.add(f"{path}.Entries: {a.entries} != {b.entries}")
+    compare_fields(a, b, PLAYLIST_FIELDS, path, result)
     if a.track_keys != b.track_keys:
         result.add(
             f"{path}.TRACK keys: length {len(a.track_keys)} != {len(b.track_keys)} "

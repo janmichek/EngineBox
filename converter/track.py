@@ -1,61 +1,17 @@
 import struct
 import zlib
-from dataclasses import dataclass, field
 from typing import List, Optional
 from urllib.parse import quote
 
+from converter.golden_parser import PositionMark
 from converter.source_reader import ReadOnlyDatabase
 
+# Engine OS key ids 0..24 alternate major ("d") / minor ("m") per Camelot number.
+KEY_MAP = {k: f"{k // 2 + 1}{'d' if k % 2 == 0 else 'm'}" for k in range(25)}
 
-@dataclass
-class OutputPositionMark:
-    name: str
-    mark_type: int
-    start: float
-    num: int
-    red: int
-    green: int
-    blue: int
-    end: Optional[float] = None
-
-
-@dataclass
-class OutputTempo:
-    inizio: float
-    bpm: float
-    metro: str
-    battito: int
-
-
-@dataclass
-class OutputTrack:
-    track_id: int
-    name: str
-    artist: Optional[str] = None
-    album: Optional[str] = None
-    genre: Optional[str] = None
-    kind: str = ""
-    location: str = ""
-    size: int = 0
-    total_time: float = 0.0
-    track_number: Optional[int] = None
-    year: Optional[int] = None
-    average_bpm: float = 0.0
-    bit_rate: Optional[int] = None
-    comments: Optional[str] = None
-    tonality: Optional[str] = None
-    label: Optional[str] = None
-    sample_rate: int = 44100
-    position_marks: List[OutputPositionMark] = field(default_factory=list)
-    tempo: Optional[OutputTempo] = None
-
-
-KEY_MAP = {}
-for k in range(25):
-    if k % 2 == 0:
-        KEY_MAP[k] = f"{k // 2 + 1}d"
-    else:
-        KEY_MAP[k] = f"{k // 2 + 1}m"
+# Engine OS stores paths relative to the library folder; the golden reference
+# was exported on this machine, so the prefix is fixed to match it exactly.
+LIBRARY_PATH_PREFIX = "Users/yeahboi/"
 
 
 def decode_beat_data(blob: bytes) -> float:
@@ -65,67 +21,8 @@ def decode_beat_data(blob: bytes) -> float:
     return total_samples / sample_rate
 
 
-def decode_beat_grid(blob: bytes) -> dict:
-    """Decode beatData blob into BPM and beat grid markers.
-    Format: 4-byte BE prefix + zlib. Decompressed:
-      8B sample_rate (BE double), 8B track_length_samples (BE double),
-      1B is_beat_data_set, 8B default_marker_count (BE uint64),
-      N markers (24B each: 8B sample_offset LE double, 8B beat_number LE int64,
-      4B beats_to_next LE uint32, 4B unknown LE uint32),
-      8B adjusted_marker_count (BE uint64), then same marker format."""
-    decompressed = zlib.decompress(blob[4:])
-    offset = 0
-    sample_rate = struct.unpack(">d", decompressed[offset : offset + 8])[0]
-    offset += 8
-    track_length_samples = struct.unpack(">d", decompressed[offset : offset + 8])[0]
-    offset += 8
-    offset += 1  # is_beat_data_set
-
-    def _parse_markers(data, off, count):
-        markers = []
-        for _ in range(count):
-            s = struct.unpack("<d", data[off : off + 8])[0]
-            off += 8
-            b = struct.unpack("<q", data[off : off + 8])[0]
-            off += 8
-            off += 8  # beats_to_next + unknown
-            markers.append((s, b))
-        return markers, off
-
-    default_count = struct.unpack(">Q", decompressed[offset : offset + 8])[0]
-    offset += 8
-    default_markers, offset = _parse_markers(decompressed, offset, default_count)
-    adjusted_count = struct.unpack(">Q", decompressed[offset : offset + 8])[0]
-    offset += 8
-    adjusted_markers, _ = _parse_markers(decompressed, offset, adjusted_count)
-
-    markers = (
-        adjusted_markers if adjusted_markers != default_markers else default_markers
-    )
-    bpm = None
-    inizio = None
-    if len(markers) >= 2:
-        first_s, first_b = markers[0]
-        last_s, last_b = markers[-1]
-        beat_span = last_b - first_b
-        sample_span = last_s - first_s
-        if beat_span != 0 and sample_span != 0:
-            bpm = sample_rate * 60 * beat_span / sample_span
-            samples_per_beat = sample_span / beat_span
-            beat_0_sample = first_s + (0 - first_b) * samples_per_beat
-            inizio = beat_0_sample / sample_rate
-
-    return {
-        "sample_rate": sample_rate,
-        "track_length_samples": track_length_samples,
-        "bpm": bpm,
-        "inizio": inizio,
-        "markers": markers,
-    }
-
-
 def map_location(path: str) -> str:
-    mapped = path.replace("../../", "Users/yeahboi/")
+    mapped = path.replace("../../", LIBRARY_PATH_PREFIX)
     return "file://localhost/" + quote(mapped, safe="/:@!$&'()*+,;=-._~")
 
 
@@ -196,38 +93,26 @@ def find_cue_adjustment(
     return (lo + hi) / 2
 
 
+_TRACK_COLUMNS = (
+    "title", "artist", "album", "genre", "fileType", "path", "filename",
+    "fileBytes", "length", "year", "bpmAnalyzed", "bitrate", "comment",
+    "key", "label", "playOrder",
+)
+
+
 def load_track(db: ReadOnlyDatabase, track_id: int) -> dict:
     rows = db.query(
-        """SELECT title, artist, album, genre, fileType, path, filename,
-                  fileBytes, length, year, bpmAnalyzed, bitrate, comment,
-                  key, label, playOrder
-           FROM Track WHERE id = ?""",
+        f"SELECT {', '.join(_TRACK_COLUMNS)} FROM Track WHERE id = ?",
         (track_id,),
     )
     if not rows:
         raise ValueError(f"Track {track_id} not found")
-    title = rows[0][0] or rows[0][6]  # fallback to filename
-    return {
-        "title": title,
-        "artist": rows[0][1],
-        "album": rows[0][2],
-        "genre": rows[0][3],
-        "fileType": rows[0][4],
-        "path": rows[0][5],
-        "filename": rows[0][6],
-        "fileBytes": rows[0][7],
-        "length": rows[0][8],
-        "year": rows[0][9],
-        "bpmAnalyzed": rows[0][10],
-        "bitrate": rows[0][11],
-        "comment": rows[0][12],
-        "key": rows[0][13],
-        "label": rows[0][14],
-        "playOrder": rows[0][15],
-    }
+    data = dict(zip(_TRACK_COLUMNS, rows[0]))
+    data["title"] = data["title"] or data["filename"]
+    return data
 
 
-def load_performance_data(db: ReadOnlyDatabase, track_id: int) -> dict:
+def load_performance_data(db: ReadOnlyDatabase, track_id: int) -> Optional[dict]:
     rows = db.query(
         "SELECT trackData, beatData, quickCues, loops FROM PerformanceData WHERE trackId = ?",
         (track_id,),
@@ -249,8 +134,8 @@ def decode_track_data_sample_rate(blob: bytes) -> float:
 
 def compute_cue_marks(
     quick_cues_blob: bytes, track_data_blob: bytes, cue_adjustment: float
-) -> List[OutputPositionMark]:
-    """Decode quickCues and produce OutputPositionMark list with adjusted Start times."""
+) -> List[PositionMark]:
+    """Decode quickCues and produce PositionMark list with adjusted Start times."""
     cues = decode_quick_cues(quick_cues_blob)
     td_sr = decode_track_data_sample_rate(track_data_blob)
     marks = []
@@ -258,7 +143,7 @@ def compute_cue_marks(
         raw_time = cue["position"] / td_sr
         start = round(raw_time + cue_adjustment, 3)
         marks.append(
-            OutputPositionMark(
+            PositionMark(
                 name=cue["label"],
                 mark_type=0,
                 start=start,
@@ -310,8 +195,8 @@ def compute_loop_marks(
     track_data_blob: bytes,
     cue_adjustment: float,
     next_num: int,
-) -> List[OutputPositionMark]:
-    """Decode loops and produce OutputPositionMark list (Type 4) with adjusted times."""
+) -> List[PositionMark]:
+    """Decode loops and produce PositionMark list (Type 4) with adjusted times."""
     loops = decode_loops(loops_blob)
     td_sr = decode_track_data_sample_rate(track_data_blob)
     marks = []
@@ -319,7 +204,7 @@ def compute_loop_marks(
         start = round(loop["start_samples"] / td_sr + cue_adjustment, 3)
         end = round(loop["end_samples"] / td_sr + cue_adjustment, 3)
         marks.append(
-            OutputPositionMark(
+            PositionMark(
                 name=loop["label"],
                 mark_type=4,
                 start=start,

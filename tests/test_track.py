@@ -3,13 +3,13 @@ import xml.etree.ElementTree as ET
 from urllib.parse import unquote
 
 from converter.golden_parser import parse_golden_xml
+from converter.playlist import load_playlists
 from converter.source_reader import ReadOnlyDatabase
 from converter.track import (
     KEY_MAP,
     compute_cue_marks,
     compute_loop_marks,
     decode_beat_data,
-    decode_beat_grid,
     decode_loops,
     decode_quick_cues,
     decode_track_data_sample_rate,
@@ -21,6 +21,13 @@ from converter.track import (
     map_location,
 )
 
+PLAYLIST_NAMES = ["KVIFF 2026", "DŇB"]
+
+
+def filename_from_location(location: str) -> str:
+    path = unquote(location.replace("file://localhost/", ""))
+    return path.split("/")[-1]
+
 
 class TestTrackModel(unittest.TestCase):
     @classmethod
@@ -29,17 +36,23 @@ class TestTrackModel(unittest.TestCase):
         cls.db = ReadOnlyDatabase("databases/m.db")
         cls.db.open()
         cls.db.validate()
+
         cls.golden_by_filename = {}
+        cls.golden_marks_by_filename = {}
         for t in (
             ET.parse("databases/rekordbox.xml")
             .getroot()
             .find("COLLECTION")
             .findall("TRACK")
         ):
-            loc = t.attrib["Location"]
-            path = unquote(loc.replace("file://localhost/", ""))
-            filename = path.split("/")[-1]
+            filename = filename_from_location(t.attrib["Location"])
             cls.golden_by_filename[filename] = t.attrib
+            cls.golden_marks_by_filename[filename] = t.findall("POSITION_MARK")
+
+        playlists = load_playlists(cls.db, PLAYLIST_NAMES)
+        cls.all_ids = list(
+            dict.fromkeys(tid for pl in playlists for tid in pl.track_ids)
+        )
 
     @classmethod
     def tearDownClass(cls):
@@ -82,10 +95,11 @@ class TestTrackModel(unittest.TestCase):
         self.assertEqual(len(result), 247)
 
     def test_decode_beat_data(self):
-        with ReadOnlyDatabase("databases/m.db") as db:
-            row = db.query("SELECT beatData FROM PerformanceData WHERE trackId = 8490")
-            result = decode_beat_data(row[0][0])
-            self.assertAlmostEqual(result, 263.0, places=1)
+        row = self.db.query(
+            "SELECT beatData FROM PerformanceData WHERE trackId = 8490"
+        )
+        result = decode_beat_data(row[0][0])
+        self.assertAlmostEqual(result, 263.0, places=1)
 
     def test_load_track_basic(self):
         data = load_track(self.db, 8490)
@@ -96,23 +110,9 @@ class TestTrackModel(unittest.TestCase):
 
     def test_all_scalar_attributes_match_golden(self):
         mismatches = []
-        kviff_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
-            )
-        ]
-        dnb_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
-            )
-        ]
-        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
-
         known_artist_exceptions = {12952, 15741, 22447}
 
-        for tid in all_ids:
+        for tid in self.all_ids:
             data = load_track(self.db, tid)
             filename = data["filename"]
             if filename not in self.golden_by_filename:
@@ -164,21 +164,7 @@ class TestTrackModel(unittest.TestCase):
 
     def test_location_matches_golden_all_tracks(self):
         mismatches = []
-        kviff_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
-            )
-        ]
-        dnb_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
-            )
-        ]
-        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
-
-        for tid in all_ids:
+        for tid in self.all_ids:
             data = load_track(self.db, tid)
             filename = data["filename"]
             if filename not in self.golden_by_filename:
@@ -195,28 +181,13 @@ class TestTrackModel(unittest.TestCase):
 
     def test_key_mapping_all_tracks(self):
         mismatches = []
-        kviff_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
-            )
-        ]
-        dnb_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
-            )
-        ]
-        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
-
-        for tid in all_ids:
+        for tid in self.all_ids:
             data = load_track(self.db, tid)
             computed_key = map_key(data["key"])
             filename = data["filename"]
             if filename not in self.golden_by_filename:
                 continue
-            golden = self.golden_by_filename[filename]
-            golden_tonality = golden.get("Tonality")
+            golden_tonality = self.golden_by_filename[filename].get("Tonality")
             if computed_key != golden_tonality:
                 mismatches.append(
                     f"Track {tid}: key={data['key']}, computed={computed_key!r}, golden={golden_tonality!r}"
@@ -229,44 +200,18 @@ class TestTrackModel(unittest.TestCase):
         color_mismatches = []
         count_mismatches = []
 
-        golden_tree = ET.parse("databases/rekordbox.xml")
-        golden_marks_by_filename = {}
-        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
-            loc = t.attrib["Location"]
-            path = unquote(loc.replace("file://localhost/", ""))
-            filename = path.split("/")[-1]
-            marks = t.findall("POSITION_MARK")
-            golden_marks_by_filename[filename] = marks
-
-        kviff_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
-            )
-        ]
-        dnb_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
-            )
-        ]
-        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
-
-        for tid in all_ids:
+        for tid in self.all_ids:
             data = load_track(self.db, tid)
             filename = data["filename"]
-            if filename not in golden_marks_by_filename:
+            if filename not in self.golden_marks_by_filename:
                 continue
-            golden_marks = golden_marks_by_filename[filename]
+            golden_marks = self.golden_marks_by_filename[filename]
 
-            qc_rows = self.db.query(
-                "SELECT quickCues FROM PerformanceData WHERE trackId = ?",
-                (tid,),
-            )
-            if not qc_rows or not qc_rows[0][0]:
+            perf = load_performance_data(self.db, tid)
+            if not perf or not perf["quickCues"]:
                 continue
 
-            source_cues = decode_quick_cues(qc_rows[0][0])
+            source_cues = decode_quick_cues(perf["quickCues"])
             golden_cue_marks = [m for m in golden_marks if m.attrib["Type"] == "0"]
             if len(source_cues) != len(golden_cue_marks):
                 has_loop = any(m.attrib["Type"] == "4" for m in golden_marks)
@@ -318,37 +263,12 @@ class TestTrackModel(unittest.TestCase):
         start_mismatches = []
         num_mismatches = []
 
-        golden_tree = ET.parse("databases/rekordbox.xml")
-        golden_marks_by_filename = {}
-        golden_track_info = {}
-        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
-            loc = t.attrib["Location"]
-            path = unquote(loc.replace("file://localhost/", ""))
-            filename = path.split("/")[-1]
-            marks = t.findall("POSITION_MARK")
-            golden_marks_by_filename[filename] = marks
-            golden_track_info[filename] = t.attrib
-
-        kviff_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
-            )
-        ]
-        dnb_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
-            )
-        ]
-        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
-
-        for tid in all_ids:
+        for tid in self.all_ids:
             data = load_track(self.db, tid)
             filename = data["filename"]
-            if filename not in golden_marks_by_filename:
+            if filename not in self.golden_marks_by_filename:
                 continue
-            golden_marks = golden_marks_by_filename[filename]
+            golden_marks = self.golden_marks_by_filename[filename]
             golden_cue_marks = [m for m in golden_marks if m.attrib["Type"] == "0"]
             if not golden_cue_marks:
                 continue
@@ -368,10 +288,8 @@ class TestTrackModel(unittest.TestCase):
                 continue
 
             golden_starts = [float(m.attrib["Start"]) for m in golden_cue_marks]
-            raw_times = []
-            for cue in source_cues:
-                td_sr = decode_track_data_sample_rate(perf["trackData"])
-                raw_times.append(cue["position"] / td_sr)
+            td_sr = decode_track_data_sample_rate(perf["trackData"])
+            raw_times = [cue["position"] / td_sr for cue in source_cues]
 
             adj = find_cue_adjustment(raw_times, golden_starts)
             if adj is None:
@@ -391,41 +309,16 @@ class TestTrackModel(unittest.TestCase):
         self.assertEqual(len(start_mismatches), 0, "\n".join(start_mismatches[:20]))
 
     def test_decode_loops_all_tracks(self):
-        from converter.track import decode_loops
-
-        kviff_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
-            )
-        ]
-        dnb_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
-            )
-        ]
-        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
-
         label_mismatches = []
         color_mismatches = []
         count_mismatches = []
 
-        golden_tree = ET.parse("databases/rekordbox.xml")
-        golden_marks_by_filename = {}
-        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
-            loc = t.attrib["Location"]
-            path = unquote(loc.replace("file://localhost/", ""))
-            filename = path.split("/")[-1]
-            marks = t.findall("POSITION_MARK")
-            golden_marks_by_filename[filename] = marks
-
-        for tid in all_ids:
+        for tid in self.all_ids:
             data = load_track(self.db, tid)
             filename = data["filename"]
-            if filename not in golden_marks_by_filename:
+            if filename not in self.golden_marks_by_filename:
                 continue
-            golden_marks = golden_marks_by_filename[filename]
+            golden_marks = self.golden_marks_by_filename[filename]
             golden_loop_marks = [m for m in golden_marks if m.attrib["Type"] == "4"]
 
             perf = load_performance_data(self.db, tid)
@@ -463,43 +356,15 @@ class TestTrackModel(unittest.TestCase):
         self.assertEqual(len(count_mismatches), 0, "\n".join(count_mismatches[:10]))
 
     def test_compute_loop_marks_match_golden(self):
-        from converter.track import (
-            compute_loop_marks,
-            find_cue_adjustment,
-        )
-
-        golden_tree = ET.parse("databases/rekordbox.xml")
-        golden_marks_by_filename = {}
-        for t in golden_tree.getroot().find("COLLECTION").findall("TRACK"):
-            loc = t.attrib["Location"]
-            path = unquote(loc.replace("file://localhost/", ""))
-            filename = path.split("/")[-1]
-            marks = t.findall("POSITION_MARK")
-            golden_marks_by_filename[filename] = marks
-
         start_mismatches = []
         end_mismatches = []
 
-        kviff_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 708"
-            )
-        ]
-        dnb_ids = [
-            r[0]
-            for r in self.db.query(
-                "SELECT trackId FROM PlaylistEntity WHERE listId = 11"
-            )
-        ]
-        all_ids = list(dict.fromkeys(kviff_ids + dnb_ids))
-
-        for tid in all_ids:
+        for tid in self.all_ids:
             data = load_track(self.db, tid)
             filename = data["filename"]
-            if filename not in golden_marks_by_filename:
+            if filename not in self.golden_marks_by_filename:
                 continue
-            golden_marks = golden_marks_by_filename[filename]
+            golden_marks = self.golden_marks_by_filename[filename]
             golden_loop_marks = [m for m in golden_marks if m.attrib["Type"] == "4"]
             golden_cue_marks = [m for m in golden_marks if m.attrib["Type"] == "0"]
             if not golden_loop_marks:
@@ -508,8 +373,6 @@ class TestTrackModel(unittest.TestCase):
             perf = load_performance_data(self.db, tid)
             if not perf or not perf["loops"]:
                 continue
-
-            from converter.track import decode_quick_cues, decode_loops
 
             source_cues = decode_quick_cues(perf["quickCues"])
             if len(source_cues) != len(golden_cue_marks):
@@ -522,9 +385,8 @@ class TestTrackModel(unittest.TestCase):
             if adj is None:
                 continue
 
-            next_num = len(source_cues)
             loop_marks = compute_loop_marks(
-                perf["loops"], perf["trackData"], adj, next_num
+                perf["loops"], perf["trackData"], adj, len(source_cues)
             )
 
             for j, mark in enumerate(loop_marks):

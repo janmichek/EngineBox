@@ -35,7 +35,7 @@ function App() {
   }, [])
 
   useEffect(() => {
-    loadPlaylists(dbPath)
+    loadPlaylists(DEFAULT_DB)
   }, [loadPlaylists])
 
   const pollStatus = useCallback(() => {

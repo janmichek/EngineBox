@@ -63,36 +63,28 @@ class GoldenModel:
     playlists: List[Playlist] = field(default_factory=list)
 
 
-def parse_float(value: str) -> float:
-    return float(value)
-
-
-def parse_int(value: str) -> int:
-    return int(value)
-
-
 def parse_position_mark(elem: ET.Element) -> PositionMark:
     end = None
     if "End" in elem.attrib:
-        end = parse_float(elem.attrib["End"])
+        end = float(elem.attrib["End"])
     return PositionMark(
         name=elem.attrib["Name"],
-        mark_type=parse_int(elem.attrib["Type"]),
-        start=parse_float(elem.attrib["Start"]),
-        num=parse_int(elem.attrib["Num"]),
-        red=parse_int(elem.attrib["Red"]),
-        green=parse_int(elem.attrib["Green"]),
-        blue=parse_int(elem.attrib["Blue"]),
+        mark_type=int(elem.attrib["Type"]),
+        start=float(elem.attrib["Start"]),
+        num=int(elem.attrib["Num"]),
+        red=int(elem.attrib["Red"]),
+        green=int(elem.attrib["Green"]),
+        blue=int(elem.attrib["Blue"]),
         end=end,
     )
 
 
 def parse_tempo(elem: ET.Element) -> Tempo:
     return Tempo(
-        inizio=parse_float(elem.attrib["Inizio"]),
-        bpm=parse_float(elem.attrib["Bpm"]),
+        inizio=float(elem.attrib["Inizio"]),
+        bpm=float(elem.attrib["Bpm"]),
         metro=elem.attrib["Metro"],
-        battito=parse_int(elem.attrib["Battito"]),
+        battito=int(elem.attrib["Battito"]),
     )
 
 
@@ -107,42 +99,38 @@ def parse_track(elem: ET.Element) -> Track:
 
     def get_optional_int(name: str) -> Optional[int]:
         val = elem.attrib.get(name)
-        return parse_int(val) if val is not None else None
-
-    def get_optional_str(name: str) -> Optional[str]:
-        return elem.attrib.get(name)
+        return int(val) if val is not None else None
 
     return Track(
-        track_id=parse_int(elem.attrib["TrackID"]),
+        track_id=int(elem.attrib["TrackID"]),
         name=elem.attrib["Name"],
-        artist=get_optional_str("Artist"),
-        album=get_optional_str("Album"),
-        genre=get_optional_str("Genre"),
+        artist=elem.attrib.get("Artist"),
+        album=elem.attrib.get("Album"),
+        genre=elem.attrib.get("Genre"),
         kind=elem.attrib["Kind"],
         location=elem.attrib["Location"],
-        size=parse_int(elem.attrib["Size"]),
-        total_time=parse_float(elem.attrib["TotalTime"]),
+        size=int(elem.attrib["Size"]),
+        total_time=float(elem.attrib["TotalTime"]),
         track_number=get_optional_int("TrackNumber"),
         year=get_optional_int("Year"),
-        average_bpm=parse_float(elem.attrib["AverageBpm"]),
+        average_bpm=float(elem.attrib["AverageBpm"]),
         bit_rate=get_optional_int("BitRate"),
-        comments=get_optional_str("Comments"),
-        tonality=get_optional_str("Tonality"),
-        label=get_optional_str("Label"),
-        sample_rate=parse_int(elem.attrib["SampleRate"]),
+        comments=elem.attrib.get("Comments"),
+        tonality=elem.attrib.get("Tonality"),
+        label=elem.attrib.get("Label"),
+        sample_rate=int(elem.attrib["SampleRate"]),
         position_marks=position_marks,
         tempo=tempo,
     )
 
 
 def parse_playlist(elem: ET.Element) -> Playlist:
-    track_keys = []
-    for child in elem:
-        if child.tag == "TRACK":
-            track_keys.append(parse_int(child.attrib["Key"]))
+    track_keys = [
+        int(child.attrib["Key"]) for child in elem if child.tag == "TRACK"
+    ]
     return Playlist(
         name=elem.attrib["Name"],
-        entries=parse_int(elem.attrib["Entries"]),
+        entries=int(elem.attrib["Entries"]),
         track_keys=track_keys,
     )
 
@@ -157,11 +145,9 @@ def parse_golden_xml(path: str) -> GoldenModel:
     product_company = product.attrib["Company"]
 
     collection = root.find("COLLECTION")
-    collection_entries = parse_int(collection.attrib["Entries"])
+    collection_entries = int(collection.attrib["Entries"])
 
-    tracks = []
-    for track_elem in collection.findall("TRACK"):
-        tracks.append(parse_track(track_elem))
+    tracks = [parse_track(track_elem) for track_elem in collection.findall("TRACK")]
 
     playlists = []
     playlists_elem = root.find("PLAYLISTS")
