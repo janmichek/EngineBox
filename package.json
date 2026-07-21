@@ -1,7 +1,7 @@
 {
-  "name": "convertor",
+  "name": "enginebox",
   "version": "1.0.0",
-  "description": "Engine OS to Rekordbox XML converter",
+  "description": "EngineBox — Engine OS to Rekordbox playlist converter",
   "main": "electron/main.js",
   "scripts": {
     "convert": "python3 convert.py",
@@ -14,13 +14,13 @@
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
     "electron:dev": "npm run ui:build && electron .",
-    "electron:build": "npm run ui:build && electron-builder --mac && xattr -dr com.apple.quarantine \"dist-electron/mac-arm64/Engine OS Converter.app\" && cp -R \"dist-electron/mac-arm64/Engine OS Converter.app\" /Applications/",
+    "electron:build": "npm run ui:build && electron-builder --mac && xattr -dr com.apple.quarantine \"dist-electron/mac-arm64/EngineBox.app\" && cp -R \"dist-electron/mac-arm64/EngineBox.app\" /Applications/",
     "electron:build:dir": "npm run ui:build && electron-builder --mac --dir"
   },
   "private": true,
   "build": {
-    "appId": "com.convertor.engine-os-rekordbox",
-    "productName": "Engine OS Converter",
+    "appId": "com.enginebox.app",
+    "productName": "EngineBox",
     "directories": {
       "output": "dist-electron"
     },

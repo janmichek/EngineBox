@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert Engine OS library to Rekordbox XML."""
+"""EngineBox — convert Engine OS library to Rekordbox XML."""
 
 import os
 import xml.etree.ElementTree as ET

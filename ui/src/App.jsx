@@ -108,7 +108,10 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>Engine OS → Rekordbox</h1>
+        <hgroup>
+          <h1>📦 EngineBox</h1>
+          <p>Engine OS to Rekordbox playlist converter</p>
+        </hgroup>
         <form onSubmit={handleDbSubmit}>
           <label>
             Library path

@@ -199,7 +199,7 @@ class APIHandler(SimpleHTTPRequestHandler):
 
 def main():
     server = HTTPServer(("localhost", PORT), APIHandler)
-    print(f"Converter server running at http://localhost:{PORT}")
+    print(f"EngineBox running at http://localhost:{PORT}")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

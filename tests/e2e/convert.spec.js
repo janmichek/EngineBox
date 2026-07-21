@@ -1,9 +1,9 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Converter UI', () => {
+test.describe('EngineBox UI', () => {
   test('loads playlists from server', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('h1')).toContainText('Engine OS');
+    await expect(page.locator('h1')).toContainText('EngineBox');
     await expect(page.locator('main ul li').first()).toBeVisible({ timeout: 10_000 });
     const count = await page.locator('main ul li').count();
     expect(count).toBeGreaterThan(0);

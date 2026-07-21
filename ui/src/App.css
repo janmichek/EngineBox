@@ -1,3 +1,26 @@
+.app header {
+  padding-top: 1.75rem;
+  padding-bottom: 1.5rem;
+}
+
+.app header hgroup {
+  margin-bottom: 1.5rem;
+}
+
+.app header hgroup h1 {
+  margin-bottom: 0.5rem;
+}
+
+.app header hgroup p {
+  margin-bottom: 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.app header form {
+  margin-bottom: 0;
+}
+
 .app {
   display: flex;
   flex-direction: column;
