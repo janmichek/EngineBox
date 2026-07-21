@@ -1,4 +1,4 @@
-<img width="720" height="809" alt="Screen Recording 2026-07-21 at 12 40 46" src="https://github.com/user-attachments/assets/25aba338-e1f6-47dc-b905-8f84cbc047de" />
+
 
 
 
@@ -6,7 +6,9 @@
 
 Convert Engine OS playlists to Rekordbox XML - locally, for free.
 
-A weekend vibecode project done with AI Loops. Not a product. Not advice on how to build software. Just an utitlity that serves me and hopefully other djs.
+A weekend vibecode project done with AI Loops. Not a product. Not advice on how to build software. Just a utility that serves me and hopefully other DJs.
+
+<img width="720" height="809" alt="Screen Recording 2026-07-21 at 12 40 46" src="https://github.com/user-attachments/assets/25aba338-e1f6-47dc-b905-8f84cbc047de" />
 
 ## Converter
 
