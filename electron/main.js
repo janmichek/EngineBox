@@ -82,6 +82,7 @@ function createWindow() {
     width: 700,
     height: 800,
     title: "EngineBox",
+    icon: path.join(__dirname, "icon.icns"),
     titleBarStyle: "hiddenInset",
     webPreferences: {
       nodeIntegration: false,

@@ -1,0 +1,109 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app header {
+  flex-shrink: 0;
+  padding-top: 1.75rem;
+  padding-bottom: 1.5rem;
+}
+
+.app header hgroup {
+  margin-bottom: 1.5rem;
+}
+
+.app header hgroup h1 {
+  margin-bottom: 0.5rem;
+}
+
+.app header hgroup p {
+  margin-bottom: 0;
+  opacity: 0.7;
+  font-size: 0.9rem;
+}
+
+.app header form {
+  margin-bottom: 0;
+}
+
+.app > main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0.5rem;
+}
+
+.app main > ul {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.app main label:has(input[type="checkbox"]) {
+  display: grid;
+  grid-template-columns: 1rem 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.app main > label.select-all {
+  grid-template-columns: 1rem 1fr;
+  flex-shrink: 0;
+}
+
+.app footer {
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  padding-top: 1.5rem;
+  padding-bottom: 1.75rem;
+  margin-top: auto;
+  background: var(--pico-background-color);
+  border-top: 1px solid var(--pico-muted-border-color);
+  box-shadow: 0 -0.75rem 1.5rem rgba(0, 0, 0, 0.08);
+}
+
+.app .footer-action {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.app footer > .footer-action > button,
+.app footer > .footer-action > a.download {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.app footer progress {
+  margin: 0;
+}
+
+.app .footer-info {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  line-height: 1.4;
+}
+
+.app .footer-error {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--pico-del-color);
+  line-height: 1.4;
+}
+
+.app a.download {
+  --pico-background-color: var(--pico-ins-color);
+  --pico-border-color: var(--pico-ins-color);
+  --pico-color: #fff;
+}

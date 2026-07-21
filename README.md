@@ -33,6 +33,15 @@ Validated against a golden reference exported by one of the paid convertor for t
 
 ## Quick start
 
+**Download (macOS)**
+
+Grab the latest build from `releases/`:
+
+```bash
+# unzip and move to Applications
+unzip releases/EngineBox-1.0.0-arm64-mac.zip -d /Applications
+```
+
 **CLI**
 
 ```bash
