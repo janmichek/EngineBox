@@ -41,20 +41,21 @@ test.describe('EngineBox UI', () => {
 
     await page.click('footer button');
 
-    await expect(page.locator('footer article')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('footer a.download')).toBeVisible({ timeout: 120_000 });
+    await expect(page.locator('footer .footer-info')).toBeVisible();
+    await expect(page.locator('footer button')).toHaveCount(0);
+  });
 
-    const startTime = Date.now();
-    while (Date.now() - startTime < 120_000) {
-      const classAttr = await page.locator('footer article').getAttribute('class');
-      if (classAttr && classAttr.includes('done')) break;
-      if (classAttr && classAttr.includes('error')) {
-        const text = await page.locator('footer article').textContent();
-        throw new Error(`Conversion failed: ${text}`);
-      }
-      await page.waitForTimeout(500);
-    }
+  test('shows convert again after changing selection', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.locator('main ul li').first()).toBeVisible({ timeout: 10_000 });
 
-    await expect(page.locator('footer article.done')).toBeVisible();
-    await expect(page.locator('a.download')).toBeVisible();
+    await page.locator('main ul li').first().locator('input[type="checkbox"]').check();
+    await page.click('footer button');
+    await expect(page.locator('footer a.download')).toBeVisible({ timeout: 120_000 });
+
+    await page.locator('main ul li').first().locator('input[type="checkbox"]').uncheck();
+    await expect(page.locator('footer button')).toBeVisible();
+    await expect(page.locator('footer a.download')).toHaveCount(0);
   });
 });

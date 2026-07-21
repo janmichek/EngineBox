@@ -1,7 +1,15 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import './App.css'
 
 const DEFAULT_DB = '/Users/yeahboi/Music/Engine Library/Database2/m.db'
+
+function selectionKey(playlists, selected) {
+  return playlists
+    .filter(p => selected[p.id])
+    .map(p => p.id)
+    .sort((a, b) => a - b)
+    .join(',')
+}
 
 function App() {
   const [dbPath, setDbPath] = useState(DEFAULT_DB)
@@ -11,6 +19,9 @@ function App() {
   const [status, setStatus] = useState({ status: 'idle', progress: 0, message: '' })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [convertedSelection, setConvertedSelection] = useState(null)
+
+  const pendingConvertedKey = useRef(null)
 
   const loadPlaylists = useCallback((path) => {
     setLoading(true)
@@ -24,6 +35,8 @@ function App() {
         } else {
           setPlaylists(data.playlists || [])
           setSelected({})
+          setConvertedSelection(null)
+          setStatus({ status: 'idle', progress: 0, message: '' })
         }
         setLoading(false)
       })
@@ -45,6 +58,8 @@ function App() {
         setStatus(data)
         if (data.status === 'running') {
           setTimeout(pollStatus, 500)
+        } else if (data.status === 'done') {
+          setConvertedSelection(pendingConvertedKey.current)
         }
       })
       .catch(() => {})
@@ -65,6 +80,7 @@ function App() {
       .map(p => p.name)
     if (names.length === 0) return
 
+    pendingConvertedKey.current = selectionKey(playlists, selected)
     setStatus({ status: 'running', progress: 0, message: 'Starting...' })
 
     try {
@@ -97,6 +113,15 @@ function App() {
   const allSelected = playlists.length > 0 && selectedCount === playlists.length
   const someSelected = selectedCount > 0 && !allSelected
   const isRunning = status.status === 'running'
+  const currentSelection = useMemo(
+    () => selectionKey(playlists, selected),
+    [playlists, selected],
+  )
+  const showDownload =
+    status.status === 'done' &&
+    convertedSelection !== null &&
+    convertedSelection === currentSelection &&
+    currentSelection !== ''
 
   const selectAllRef = useRef(null)
   useEffect(() => {
@@ -166,25 +191,30 @@ function App() {
       </main>
 
       <footer>
-        <button
-          onClick={handleConvert}
-          disabled={selectedCount === 0 || isRunning}
-        >
-          {isRunning ? 'Converting...' : 'Convert'}
-        </button>
-
-        {status.status !== 'idle' && (
-          <article className={status.status}>
-            {status.status === 'running' && (
-              <progress value={status.progress} max={100} />
+        {isRunning ? (
+          <div className="footer-action">
+            <button disabled>Converting...</button>
+            <progress value={status.progress} max={100} />
+          </div>
+        ) : showDownload ? (
+          <div className="footer-action">
+            <a href="/output/rekordbox.xml" download role="button" className="download">
+              Download rekordbox.xml
+            </a>
+            <p className="footer-info">{status.message}</p>
+          </div>
+        ) : (
+          <div className="footer-action">
+            <button
+              onClick={handleConvert}
+              disabled={selectedCount === 0}
+            >
+              Convert
+            </button>
+            {status.status === 'error' && (
+              <p className="footer-error" role="alert">{status.message}</p>
             )}
-            <p>{status.message}</p>
-            {status.status === 'done' && (
-              <a href="/output/rekordbox.xml" download role="button" className="download">
-                Download rekordbox.xml
-              </a>
-            )}
-          </article>
+          </div>
         )}
       </footer>
     </div>
