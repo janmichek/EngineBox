@@ -2,12 +2,13 @@
   "name": "enginebox",
   "version": "1.0.0",
   "description": "EngineBox — Engine OS to Rekordbox playlist converter",
-  "main": "electron/main.js",
+  "type": "module",
+  "main": "electron/main.cjs",
   "scripts": {
-    "convert": "python3 convert.py",
-    "test": "python3 -m unittest discover -s tests",
+    "convert": "node convert.js",
+    "test": "vitest run",
     "test:all": "npm run test && npm run test:e2e",
-    "server": "python3 server.py",
+    "server": "node server.js",
     "ui:dev": "npx vite",
     "ui:build": "npx vite build",
     "dev": "concurrently \"npm run server\" \"npm run ui:dev\"",
@@ -15,7 +16,7 @@
     "test:e2e:ui": "npx playwright test --ui",
     "icons:generate": "bash scripts/generate-icon.sh",
     "electron:dev": "npm run icons:generate && npm run ui:build && electron .",
-    "electron:build": "npm run icons:generate && npm run ui:build && electron-builder --mac && mkdir -p releases && cp dist-electron/*.dmg releases/ && xattr -dr com.apple.quarantine releases/*.dmg",
+    "electron:build": "npm run icons:generate && npm run ui:build && electron-builder --mac && mkdir -p releases && cp dist-electron/*.dmg releases/ && xattr -dr com.apple.quarantine releases/*.dmg"
   },
   "private": true,
   "build": {
@@ -26,17 +27,15 @@
     },
     "files": [
       "electron/**/*",
-      "server.py",
-      "convert.py",
+      "server.js",
+      "convert.js",
       "converter/**/*",
       "dist/**/*",
-      "!**/node_modules/**",
-      "!**/__pycache__/**",
-      "!**/*.pyc"
+      "!**/node_modules/**"
     ],
     "asarUnpack": [
-      "server.py",
-      "convert.py",
+      "server.js",
+      "convert.js",
       "converter/**/*",
       "dist/**/*"
     ],
@@ -48,8 +47,11 @@
   },
   "dependencies": {
     "@picocss/pico": "^2.1.1",
+    "better-sqlite3": "^13.0.1",
+    "fast-xml-parser": "^5.10.1",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "xmlbuilder2": "^4.0.3"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
@@ -60,6 +62,7 @@
     "electron": "^35.7.0",
     "electron-builder": "^26.0.12",
     "oxlint": "^1.71.0",
-    "vite": "^8.1.1"
+    "vite": "^8.1.1",
+    "vitest": "^4.1.10"
   }
 }
