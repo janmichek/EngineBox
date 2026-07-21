@@ -4,7 +4,13 @@ Convert Engine OS playlists to Rekordbox XML - locally, for free.
 
 A weekend vibecode project done with AI Loops. Not a product. Not advice on how to build software.
 
-## Why this exists
+## Product
+
+Reads an Engine OS 5.0.0 SQLite library (`m.db`) and writes Rekordbox 7.2.16-compatible XML with track metadata, cues, and playlist order.
+
+Validated against a golden reference exported by one of the paid converters for two playlists. Built on Node.js with better-sqlite3, fast-xml-parser, and xmlbuilder2.
+
+## Motivation
 
 I'm a musician and DJ. There's no one-size-fits-all setup for DJing - the field has strong players, and each one wants your library locked to their ecosystem. Moving between them is painful.
 
@@ -24,12 +30,6 @@ AI is excellent for prototyping, validating ideas, and **replicating existing so
 6. **Composer 2.5** - built the simple UI on top.
 
 The loop protocol lives in `ai/LOOP.md`. The target behavior is in `ai/SPEC.md`.
-
-## What it does
-
-Reads an Engine OS 5.0.0 SQLite library (`m.db`) and writes Rekordbox 7.2.16-compatible XML with track metadata, cues, and playlist order.
-
-Validated against a golden reference exported by one of the paid converters for two playlists. Built on Node.js with better-sqlite3, fast-xml-parser, and xmlbuilder2.
 
 ## Quick start
 
