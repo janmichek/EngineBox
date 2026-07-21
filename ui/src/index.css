@@ -1,5 +1,11 @@
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
-  max-width: 640px;
+  max-width: 40rem;
   margin: 0 auto;
-  padding: 2rem 1rem;
+  padding: 0;
 }

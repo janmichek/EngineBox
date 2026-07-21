@@ -1,115 +1,52 @@
-/* playlist list */
-.playlist-list {
-  padding: 0;
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
 }
 
-.playlist-list li {
+.app > main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.app main > ul {
+  flex: 1;
+  overflow: auto;
+  padding: 0;
+  margin: 0;
   list-style: none;
 }
 
-.playlist-list label {
-  display: flex;
-  align-items: center;
+.app main label:has(input[type="checkbox"]) {
+  display: grid;
+  grid-template-columns: 1rem 1fr auto;
   gap: 0.75rem;
-  padding: 0.6rem 1rem;
-  margin-bottom: 0;
-  border-radius: var(--pico-border-radius);
-  cursor: pointer;
-}
-
-.playlist-list label:hover {
-  background: rgba(255 255 255 / 5%);
-}
-
-.playlist-list input[type="checkbox"] {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--pico-primary);
-}
-
-.playlist-list .name {
-  flex: 1;
-}
-
-.playlist-list small.count {
-  font-size: 0.8rem;
-  opacity: 0.5;
-}
-
-/* small buttons (toolbar + form) */
-.toolbar button,
-.db-input-row button {
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
-  margin-bottom: 0;
-}
-
-/* toolbar */
-.toolbar {
-  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
 }
 
-.toolbar .count {
-  margin-left: auto;
-  font-size: 0.8rem;
-  opacity: 0.6;
+.app main > label.select-all {
+  grid-template-columns: 1rem 1fr;
+  flex-shrink: 0;
 }
 
-/* db form */
-.db-input-row {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.db-input-row input {
-  flex: 1;
-  font-family: ui-monospace, Consolas, monospace;
-  font-size: 0.85rem;
-}
-
-/* convert button */
-.convert-btn {
+.app footer > button,
+.app a.download {
   width: 100%;
 }
 
-/* status (article element) */
-.status {
-  margin-top: 1.5rem;
+.app a.download {
+  --pico-background-color: var(--pico-ins-color);
+  --pico-border-color: var(--pico-ins-color);
+  --pico-color: #fff;
 }
 
-.status.done {
-  border-color: var(--pico-ins-color, #2ea043);
+.app article.done {
+  border-color: var(--pico-ins-color);
 }
 
-.status.error {
-  border-color: var(--pico-del-color, #da3633);
-}
-
-.progress-bar {
-  height: 6px;
-  background: var(--pico-muted-border-color);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: 0.75rem;
-}
-
-.progress-fill {
-  height: 100%;
-  background: var(--pico-primary);
-  transition: width 0.3s ease;
-}
-
-/* loading */
-.loading {
-  opacity: 0.6;
-  font-size: 0.9rem;
-}
-
-/* error */
-.error {
-  color: var(--pico-del-color, #df4040);
-  font-size: 0.9rem;
+.app article.error {
+  border-color: var(--pico-del-color);
 }

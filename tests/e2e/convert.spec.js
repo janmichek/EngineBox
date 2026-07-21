@@ -4,36 +4,36 @@ test.describe('Converter UI', () => {
   test('loads playlists from server', async ({ page }) => {
     await page.goto('/');
     await expect(page.locator('h1')).toContainText('Engine OS');
-    await expect(page.locator('.playlist-list li').first()).toBeVisible({ timeout: 10_000 });
-    const count = await page.locator('.playlist-list li').count();
+    await expect(page.locator('main ul li').first()).toBeVisible({ timeout: 10_000 });
+    const count = await page.locator('main ul li').count();
     expect(count).toBeGreaterThan(0);
   });
 
   test('select all and convert all playlists', async ({ page }) => {
     await page.goto('/');
-    await expect(page.locator('.playlist-list li').first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('main ul li').first()).toBeVisible({ timeout: 10_000 });
 
-    await page.click('text=Select All');
-    const selectedText = await page.locator('.toolbar .count').textContent();
+    await page.locator('.select-all input[type="checkbox"]').check();
+    const selectedText = await page.locator('.select-all span').textContent();
     const match = selectedText.match(/(\d+) selected/);
     expect(parseInt(match[1])).toBeGreaterThan(0);
 
-    await page.click('.convert-btn');
+    await page.click('footer button');
 
-    await expect(page.locator('.status')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('footer article')).toBeVisible({ timeout: 5000 });
 
     const startTime = Date.now();
     while (Date.now() - startTime < 120_000) {
-      const classAttr = await page.locator('.status').getAttribute('class');
+      const classAttr = await page.locator('footer article').getAttribute('class');
       if (classAttr && classAttr.includes('done')) break;
       if (classAttr && classAttr.includes('error')) {
-        const text = await page.locator('.status').textContent();
+        const text = await page.locator('footer article').textContent();
         throw new Error(`Conversion failed: ${text}`);
       }
       await page.waitForTimeout(500);
     }
 
-    await expect(page.locator('.status.done')).toBeVisible();
-    await expect(page.locator('.download-link')).toBeVisible();
+    await expect(page.locator('footer article.done')).toBeVisible();
+    await expect(page.locator('a.download')).toBeVisible();
   });
 });

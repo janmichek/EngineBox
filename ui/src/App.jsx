@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import './App.css'
 
 const DEFAULT_DB = '/Users/yeahboi/Music/Engine Library/Database2/m.db'
@@ -83,52 +83,69 @@ function App() {
     setSelected(prev => ({ ...prev, [id]: !prev[id] }))
   }
 
-  const selectAll = () => {
-    const next = {}
-    playlists.forEach(p => { next[p.id] = true })
-    setSelected(next)
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelected({})
+    } else {
+      const next = {}
+      playlists.forEach(p => { next[p.id] = true })
+      setSelected(next)
+    }
   }
 
-  const selectNone = () => setSelected({})
-
   const selectedCount = Object.values(selected).filter(Boolean).length
+  const allSelected = playlists.length > 0 && selectedCount === playlists.length
+  const someSelected = selectedCount > 0 && !allSelected
   const isRunning = status.status === 'running'
 
+  const selectAllRef = useRef(null)
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someSelected
+    }
+  }, [someSelected, selectedCount])
+
   return (
-    <main>
-      <hgroup>
+    <div className="app">
+      <header>
         <h1>Engine OS → Rekordbox</h1>
-      </hgroup>
-
-      <form onSubmit={handleDbSubmit}>
-        <label htmlFor="db-path">Database path</label>
-        <div className="db-input-row">
-          <input
-            id="db-path"
-            type="text"
-            value={dbInput}
-            onChange={e => setDbInput(e.target.value)}
-            disabled={isRunning}
-            placeholder="/path/to/Engine Library/Database2/m.db"
-          />
+        <form onSubmit={handleDbSubmit}>
+          <label>
+            Library path
+            <input
+              type="text"
+              value={dbInput}
+              onChange={e => setDbInput(e.target.value)}
+              disabled={isRunning}
+              placeholder="/Users/you/Music/Engine Library/Database2/m.db"
+            />
+          </label>
           <button type="submit" disabled={isRunning || !dbInput.trim()}>Load</button>
-        </div>
-      </form>
+        </form>
+      </header>
 
-      {loading && <p className="loading">Loading playlists...</p>}
-      {error && <p className="error">{error}</p>}
+      <main>
+        {!loading && !error && (
+          <label className="select-all">
+            <input
+              ref={selectAllRef}
+              type="checkbox"
+              checked={allSelected}
+              onChange={toggleAll}
+              disabled={isRunning || playlists.length === 0}
+              aria-label="Select all playlists"
+            />
+            <span>{selectedCount} of {playlists.length} selected</span>
+          </label>
+        )}
 
-      {!loading && !error && (
-        <>
-          <nav className="toolbar">
-            <button onClick={selectAll} disabled={isRunning}>Select All</button>
-            <button onClick={selectNone} disabled={isRunning}>Select None</button>
-            <span className="count">{selectedCount} of {playlists.length} selected</span>
-          </nav>
+        {loading && <p aria-busy="true">Loading playlists...</p>}
+        {error && <p role="alert">{error}</p>}
 
-          <ul className="playlist-list" role="listbox" aria-label="Playlists">
+        {!loading && !error && (
+          <ul role="listbox" aria-label="Playlists">
             {playlists.map(p => (
-              <li key={p.id} className={selected[p.id] ? 'selected' : ''}>
+              <li key={p.id}>
                 <label>
                   <input
                     type="checkbox"
@@ -136,39 +153,38 @@ function App() {
                     onChange={() => toggle(p.id)}
                     disabled={isRunning}
                   />
-                  <span className="name">{p.name}</span>
-                  <small className="count">{p.track_count} tracks</small>
+                  <span>{p.name}</span>
+                  <small>{p.track_count} tracks</small>
                 </label>
               </li>
             ))}
           </ul>
-        </>
-      )}
+        )}
+      </main>
 
-      <button
-        className="convert-btn"
-        onClick={handleConvert}
-        disabled={selectedCount === 0 || isRunning}
-      >
-        {isRunning ? 'Converting...' : 'Convert'}
-      </button>
+      <footer>
+        <button
+          onClick={handleConvert}
+          disabled={selectedCount === 0 || isRunning}
+        >
+          {isRunning ? 'Converting...' : 'Convert'}
+        </button>
 
-      {status.status !== 'idle' && (
-        <article className={`status ${status.status}`}>
-          {status.status === 'running' && (
-            <div className="progress-bar">
-              <div className="progress-fill" style={{ width: `${status.progress}%` }} />
-            </div>
-          )}
-          <p>{status.message}</p>
-          {status.status === 'done' && (
-            <a href="/output/rekordbox.xml" download className="download-link" role="button">
-              Download rekordbox.xml
-            </a>
-          )}
-        </article>
-      )}
-    </main>
+        {status.status !== 'idle' && (
+          <article className={status.status}>
+            {status.status === 'running' && (
+              <progress value={status.progress} max={100} />
+            )}
+            <p>{status.message}</p>
+            {status.status === 'done' && (
+              <a href="/output/rekordbox.xml" download role="button" className="download">
+                Download rekordbox.xml
+              </a>
+            )}
+          </article>
+        )}
+      </footer>
+    </div>
   )
 }
 
