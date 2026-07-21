@@ -134,7 +134,10 @@ function App() {
     <div className="app">
       <header>
         <hgroup>
-          <h1>📦 EngineBox</h1>
+          <h1>
+            <img src="/favicon.svg" alt="" className="app-icon" aria-hidden="true" />
+            EngineBox
+          </h1>
           <p>Engine OS to Rekordbox playlist converter</p>
         </hgroup>
         <form onSubmit={handleDbSubmit}>

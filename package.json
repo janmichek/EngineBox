@@ -13,9 +13,9 @@
     "dev": "concurrently \"npm run server\" \"npm run ui:dev\"",
     "test:e2e": "npx playwright test",
     "test:e2e:ui": "npx playwright test --ui",
-    "electron:dev": "npm run ui:build && electron .",
-    "electron:build": "npm run ui:build && electron-builder --mac && mkdir -p releases && cp dist-electron/*.dmg releases/ && xattr -dr com.apple.quarantine releases/*.dmg",
-    "electron:build:dir": "npm run ui:build && electron-builder --mac --dir"
+    "icons:generate": "bash scripts/generate-icon.sh",
+    "electron:dev": "npm run icons:generate && npm run ui:build && electron .",
+    "electron:build": "npm run icons:generate && npm run ui:build && electron-builder --mac && mkdir -p releases && cp dist-electron/*.dmg releases/ && xattr -dr com.apple.quarantine releases/*.dmg",
   },
   "private": true,
   "build": {
@@ -30,7 +30,6 @@
       "convert.py",
       "converter/**/*",
       "dist/**/*",
-      "databases/**/*",
       "!**/node_modules/**",
       "!**/__pycache__/**",
       "!**/*.pyc"
@@ -39,8 +38,7 @@
       "server.py",
       "convert.py",
       "converter/**/*",
-      "dist/**/*",
-      "databases/**/*"
+      "dist/**/*"
     ],
     "mac": {
       "target": "dmg",
