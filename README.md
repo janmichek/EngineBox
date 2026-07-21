@@ -4,11 +4,10 @@ Convert Engine OS playlists to Rekordbox XML - locally, for free.
 
 A weekend vibecode project done with AI Loops. Not a product. Not advice on how to build software.
 
-## Product
+## Converter
 
 Reads an Engine OS 5.0.0 SQLite library (`m.db`) and writes Rekordbox 7.2.16-compatible XML with track metadata, cues, and playlist order.
 
-Validated against a golden reference exported by one of the paid converters for two playlists. Built on Node.js with better-sqlite3, fast-xml-parser, and xmlbuilder2.
 
 ## Motivation
 
@@ -16,7 +15,7 @@ I'm a musician and DJ. There's no one-size-fits-all setup for DJing - the field 
 
 I've used Engine OS for years. In clubs, the standard is AlphaTheta and Rekordbox - great hardware, rough software. I was paying ~$10/month for a playlist converter and thought that was ridiculous.
 
-Around the same time, two ideas clicked: SaaS feels increasingly replaceable by local AI tooling, and **AI loop-driven development** was starting to look real. I wanted to try it myself - not as a vibecoder, but as someone who normally prefers supervised, human-crafted coding with AI as a helper.
+Around the same time, two ideas clicked: SaaS feels increasingly replaceable by  AI tooling, and **AI loop-driven development** was starting to look real. I wanted to try it myself - not as a vibecoder, but as someone who normally prefers supervised, human-crafted coding with AI as a helper.
 
 AI is excellent for prototyping, validating ideas, and **replicating existing software behavior**. That's exactly what this project is: take library A, produce library B, and let the loops reverse-engineer how.
 
@@ -30,6 +29,9 @@ AI is excellent for prototyping, validating ideas, and **replicating existing so
 6. **Composer 2.5** - built the simple UI on top.
 
 The loop protocol lives in `ai/LOOP.md`. The target behavior is in `ai/SPEC.md`.
+
+Validated against a golden reference exported by one of the paid converters for two playlists. Built on Node.js with better-sqlite3, fast-xml-parser, and xmlbuilder2.
+
 
 ## Quick start
 
