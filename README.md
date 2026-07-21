@@ -27,9 +27,9 @@ The loop protocol lives in `ai/LOOP.md`. The target behavior is in `ai/SPEC.md`.
 
 ## What it does
 
-Reads an Engine OS 3.0.2 SQLite library (`m.db`) and writes Rekordbox-compatible XML with track metadata, cues, and playlist order.
+Reads an Engine OS 5.0.0 SQLite library (`m.db`) and writes Rekordbox 7.2.16-compatible XML with track metadata, cues, and playlist order.
 
-Validated against a golden reference exported by one of the paid convertor for two playlists. Python stdlib only - no extra dependencies for the converter itself.
+Validated against a golden reference exported by one of the paid converters for two playlists. Built on Node.js with better-sqlite3, fast-xml-parser, and xmlbuilder2.
 
 ## Quick start
 
@@ -40,7 +40,7 @@ Download `EngineBox-1.0.0-arm64.dmg` from `releases/`, open it, and drag EngineB
 **CLI**
 
 ```bash
-python3 convert.py
+node convert.js
 ```
 
 Output goes to `output/rekordbox.xml`.
@@ -48,7 +48,7 @@ Output goes to `output/rekordbox.xml`.
 **Tests**
 
 ```bash
-python3 -m unittest discover -s tests
+npm test
 ```
 
 **UI** (optional - React + local server)
