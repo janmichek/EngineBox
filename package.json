@@ -30,7 +30,6 @@
       "convert.py",
       "converter/**/*",
       "dist/**/*",
-      "databases/**/*",
       "!**/node_modules/**",
       "!**/__pycache__/**",
       "!**/*.pyc"
@@ -39,9 +38,9 @@
       "server.py",
       "convert.py",
       "converter/**/*",
-      "dist/**/*",
-      "databases/**/*"
+      "dist/**/*"
     ],
+    "afterPack": "scripts/strip-locales.js",
     "mac": {
       "target": "dmg",
       "category": "public.app-category.music",
