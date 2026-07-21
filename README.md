@@ -35,9 +35,11 @@ Validated against a golden reference exported by one of the paid converters for 
 
 ## Quick start
 
-**Download (macOS)**
+**[Download for macOS](https://github.com/janmichek/EngineBox/releases/latest)**
 
-Download `EngineBox-1.0.0-arm64.dmg` from `releases/`, open it, and drag EngineBox to Applications.
+Download `EngineBox-1.0.0-arm64.dmg`, open it, and drag EngineBox to Applications.
+
+Feel free to shoot a prompt to compile Windows version. It should be fairly easy.
 
 **CLI**
 
