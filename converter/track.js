@@ -1,5 +1,17 @@
-import { inflateSync } from 'node:zlib';
-import { PositionMark } from './golden_parser.js';
+import { Buffer } from 'buffer';
+import { unzlibSync } from 'fflate';
+import { PositionMark } from './models.js';
+
+function inflateSync(blob) {
+  const input = blob instanceof Uint8Array ? blob : new Uint8Array(blob);
+  return Buffer.from(unzlibSync(input));
+}
+
+function asBuffer(blob) {
+  if (Buffer.isBuffer(blob)) return blob;
+  if (blob instanceof Uint8Array) return Buffer.from(blob.buffer, blob.byteOffset, blob.byteLength);
+  return Buffer.from(blob);
+}
 
 // Engine OS key ids 0..24 alternate major ("d") / minor ("m") per Camelot number.
 export const KEY_MAP = {};
@@ -47,14 +59,14 @@ export function mapComment(comment, goldenComment) {
 }
 
 export function decodeBeatData(blob) {
-  const decompressed = inflateSync(blob.subarray(4));
+  const decompressed = inflateSync(asBuffer(blob).subarray(4));
   const sampleRate = decompressed.readDoubleBE(0);
   const totalSamples = decompressed.readDoubleBE(8);
   return totalSamples / sampleRate;
 }
 
 export function decodeQuickCues(blob) {
-  const decompressed = inflateSync(blob.subarray(4));
+  const decompressed = inflateSync(asBuffer(blob).subarray(4));
   const numSlots = Number(decompressed.readBigUInt64BE(0));
   let offset = 8;
   const cues = [];
@@ -133,7 +145,7 @@ export function loadPerformanceData(db, trackId) {
 }
 
 export function decodeTrackDataSampleRate(blob) {
-  const decompressed = inflateSync(blob.subarray(4));
+  const decompressed = inflateSync(asBuffer(blob).subarray(4));
   return decompressed.readDoubleBE(0);
 }
 
@@ -159,20 +171,21 @@ export function computeCueMarks(quickCuesBlob, trackDataBlob, cueAdjustment) {
 }
 
 export function decodeLoops(blob) {
-  const numSlots = Number(blob.readBigUInt64LE(0));
+  const buf = asBuffer(blob);
+  const numSlots = Number(buf.readBigUInt64LE(0));
   let offset = 8;
   const loops = [];
   for (let i = 0; i < numSlots; i++) {
-    const labelLen = blob[offset];
+    const labelLen = buf[offset];
     offset += 1;
-    const label = blob.subarray(offset, offset + labelLen).toString('utf-8');
+    const label = buf.subarray(offset, offset + labelLen).toString('utf-8');
     offset += labelLen;
-    const startSamples = blob.readDoubleLE(offset);
+    const startSamples = buf.readDoubleLE(offset);
     offset += 8;
-    const endSamples = blob.readDoubleLE(offset);
+    const endSamples = buf.readDoubleLE(offset);
     offset += 8;
     offset += 2; // unknown
-    const argb = blob.readUInt32BE(offset);
+    const argb = buf.readUInt32BE(offset);
     offset += 4;
     if (label) {
       loops.push({

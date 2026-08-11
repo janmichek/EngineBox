@@ -1,12 +1,8 @@
 import Database from 'better-sqlite3';
 import { accessSync, constants } from 'node:fs';
+import { DatabaseError } from './errors.js';
 
-export class DatabaseError extends Error {
-  constructor(message) {
-    super(message);
-    this.name = 'DatabaseError';
-  }
-}
+export { DatabaseError };
 
 export class ReadOnlyDatabase {
   constructor(dbPath) {

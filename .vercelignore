@@ -1,0 +1,14 @@
+# Keep Vercel uploads tiny — conversion runs in the browser
+databases/
+releases/
+dist-electron/
+dist/
+node_modules/
+.idea/
+.cursor/
+.ruff_cache/
+test-results/
+playwright-report/
+*.dmg
+*.exe
+*.app

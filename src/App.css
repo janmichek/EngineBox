@@ -12,7 +12,9 @@
 }
 
 .app header form,
-.app header form * {
+.app header form *,
+.app header .library-picker,
+.app header .library-picker * {
   -webkit-app-region: no-drag;
 }
 
@@ -43,6 +45,47 @@
   margin-bottom: 0;
 }
 
+.app header .library-picker {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.app header .library-picker > button {
+  width: fit-content;
+  margin: 0;
+}
+
+.app header .file-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.75;
+  line-height: 1.45;
+}
+
+.app header .file-hint-paths {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.app header .file-hint-paths li {
+  display: grid;
+  grid-template-columns: 2.25rem 1fr;
+  gap: 0.5rem;
+  align-items: baseline;
+}
+
+.app header .file-hint code {
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.app header .file-hint-privacy {
+  margin: 0.65rem 0 0;
+}
+
 .app > main {
   flex: 1;
   min-height: 0;
@@ -70,6 +113,11 @@
 .app main > label.select-all {
   grid-template-columns: 1rem 1fr;
   flex-shrink: 0;
+}
+
+.app main > label.select-all.is-empty {
+  color: var(--pico-muted-color);
+  opacity: 0.75;
 }
 
 .app footer {
