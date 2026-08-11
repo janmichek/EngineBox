@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { XMLParser } from 'fast-xml-parser';
 import { parseGoldenXml } from '../converter/golden_parser.js';
@@ -401,7 +401,7 @@ describe('Track module', () => {
       const adj = findCueAdjustment(rawTimes, goldenCueStarts);
       if (adj === null) continue;
 
-      const loopMarks = computeLoopMarks(perf.loops, perf.trackData, adj, sourceCues.length);
+      const loopMarks = computeLoopMarks(perf.loops, perf.trackData, adj);
 
       for (let j = 0; j < loopMarks.length; j++) {
         if (j < goldenLoopMarks.length) {

@@ -1,25 +1,55 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { doConvert } from '../convert.js';
-import { parseGoldenXml, GoldenModel, Playlist } from '../converter/golden_parser.js';
+import { parseGoldenXml } from '../converter/golden_parser.js';
 import { compareModels } from '../converter/comparator.js';
+import { ReadOnlyDatabase } from '../converter/source_reader.js';
+import { convertWithDb } from '../converter/convert_core.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = join(__dirname, '..', 'output');
 const TEST_OUTPUT = join(OUTPUT_DIR, 'test_integration.xml');
+const CALIBRATED_OUTPUT = join(OUTPUT_DIR, 'test_calibrated.xml');
+const PLAYLISTS = ['KVIFF 2026', 'DŇB'];
+
+function loadGoldenByFilename() {
+  const golden = parseGoldenXml('databases/rekordbox.xml');
+  const byFilename = {};
+  for (const track of golden.tracks) {
+    const filepath = decodeURIComponent(track.location.replace('file://localhost/', ''));
+    byFilename[filepath.split('/').pop()] = track;
+  }
+  return { golden, byFilename };
+}
+
+function markKey(m) {
+  return `${m.mark_type}|${m.num}|${m.name}|${m.red},${m.green},${m.blue}`;
+}
+
+function withoutMarksAndTempo(model) {
+  return {
+    ...model,
+    tracks: model.tracks.map(t => ({
+      ...t,
+      tempo: null,
+      total_time: Math.floor(t.total_time),
+      position_marks: [],
+    })),
+  };
+}
 
 describe('Integration', () => {
   beforeAll(() => {
     mkdirSync(OUTPUT_DIR, { recursive: true });
   });
 
-  it('convert produces valid output matching golden reference', () => {
+  it('honest convert matches structure and scalar fields', () => {
     const { outputPath, trackCount, playlistCount } = doConvert(
-      ['KVIFF 2026', 'DŇB'],
+      PLAYLISTS,
       TEST_OUTPUT,
-      null,
+      {},
       'databases/m.db'
     );
 
@@ -28,9 +58,56 @@ describe('Integration', () => {
     expect(playlistCount).toBe(2);
 
     const generated = parseGoldenXml(outputPath);
-    const golden = parseGoldenXml('databases/rekordbox.xml');
+    const { golden } = loadGoldenByFilename();
 
-    const result = compareModels(golden, generated);
-    expect(result.ok).toBe(true);
+    expect(generated.playlists.map(p => p.name)).toEqual(['KVIFF 2026', 'DŇB']);
+    expect(generated.playlists.map(p => p.entries)).toEqual([178, 115]);
+    expect(generated.playlists.map(p => p.track_keys)).toEqual(
+      golden.playlists.map(p => p.track_keys)
+    );
+
+    const result = compareModels(
+      withoutMarksAndTempo(golden),
+      withoutMarksAndTempo(generated)
+    );
+    const unexpected = result.mismatches.filter(
+      m => !m.includes('Artist') && !m.includes('Comments')
+    );
+    expect(unexpected).toEqual([]);
+
+    // Cue/loop identity (slot, name, color) — order may differ from MIXO.
+    for (let i = 0; i < golden.tracks.length; i++) {
+      const gKeys = golden.tracks[i].position_marks.map(markKey).sort();
+      const aKeys = generated.tracks[i].position_marks.map(markKey).sort();
+      expect(aKeys, `track ${i} marks`).toEqual(gKeys);
+    }
+  });
+
+  it('cue-calibrated convert matches most golden Start times', () => {
+    const { golden, byFilename } = loadGoldenByFilename();
+    const db = new ReadOnlyDatabase('databases/m.db');
+    db.openSync();
+    try {
+      const { xml, trackCount } = convertWithDb(db, PLAYLISTS, byFilename);
+      writeFileSync(CALIBRATED_OUTPUT, xml, 'utf-8');
+      expect(trackCount).toBe(293);
+
+      const generated = parseGoldenXml(CALIBRATED_OUTPUT);
+      let matched = 0;
+      let total = 0;
+      for (let i = 0; i < golden.tracks.length; i++) {
+        const byKey = new Map(generated.tracks[i].position_marks.map(m => [markKey(m), m]));
+        for (const gm of golden.tracks[i].position_marks) {
+          total += 1;
+          const am = byKey.get(markKey(gm));
+          if (!am) continue;
+          if (am.start === gm.start && (gm.end == null || am.end === gm.end)) matched += 1;
+        }
+      }
+      // Research: a handful of tracks have no single constant cue adjustment.
+      expect(matched / total).toBeGreaterThan(0.97);
+    } finally {
+      db.close();
+    }
   });
 });

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './App.css'
 
 const LIBRARY_HINTS = [
@@ -14,10 +14,6 @@ function selectionKey(playlists, selected) {
     .join(',')
 }
 
-function selectedNames(playlists, selected) {
-  return playlists.filter(p => selected[p.id]).map(p => p.name)
-}
-
 function App() {
   const [browserDb, setBrowserDb] = useState(null)
   const [libraryLoaded, setLibraryLoaded] = useState(false)
@@ -29,41 +25,25 @@ function App() {
   const [xmlResult, setXmlResult] = useState(null)
   const [convertedSelection, setConvertedSelection] = useState(null)
 
-  const pendingConvertedKey = useRef(null)
   const fileInputRef = useRef(null)
   const selectAllRef = useRef(null)
 
   useEffect(() => () => browserDb?.close(), [browserDb])
 
-  const openLibraryPicker = async () => {
-    if (isRunning) return
+  const isRunning = status.status === 'running'
+  const selectedCount = Object.values(selected).filter(Boolean).length
+  const allSelected = playlists.length > 0 && selectedCount === playlists.length
+  const someSelected = selectedCount > 0 && !allSelected
+  const currentSelection = selectionKey(playlists, selected)
+  const showDownload =
+    status.status === 'done' &&
+    convertedSelection !== null &&
+    convertedSelection === currentSelection &&
+    currentSelection !== ''
 
-    // Chromium: start in Music (closest we can get to Engine Library).
-    if (typeof window.showOpenFilePicker === 'function') {
-      try {
-        const [handle] = await window.showOpenFilePicker({
-          id: 'engine-library',
-          startIn: 'music',
-          types: [
-            {
-              description: 'Engine OS database (*.db)',
-              accept: {
-                'application/x-sqlite3': ['.db'],
-              },
-            },
-          ],
-          excludeAcceptAllOption: true,
-        })
-        const file = await handle.getFile()
-        await loadLibraryFile(file)
-        return
-      } catch (err) {
-        if (err?.name === 'AbortError') return
-      }
-    }
-
-    fileInputRef.current?.click()
-  }
+  useEffect(() => {
+    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected
+  }, [someSelected])
 
   const loadLibraryFile = async (file) => {
     if (!file) return
@@ -96,24 +76,43 @@ function App() {
     }
   }
 
-  const handleFileChange = async (e) => {
-    await loadLibraryFile(e.target.files?.[0])
+  const openLibraryPicker = async () => {
+    if (isRunning) return
+
+    if (typeof window.showOpenFilePicker === 'function') {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          id: 'engine-library',
+          startIn: 'music',
+          types: [{
+            description: 'Engine OS database (*.db)',
+            accept: { 'application/x-sqlite3': ['.db'] },
+          }],
+          excludeAcceptAllOption: true,
+        })
+        await loadLibraryFile(await handle.getFile())
+        return
+      } catch (err) {
+        if (err?.name === 'AbortError') return
+      }
+    }
+
+    fileInputRef.current?.click()
   }
 
   const handleConvert = async () => {
-    const names = selectedNames(playlists, selected)
+    const names = playlists.filter(p => selected[p.id]).map(p => p.name)
     if (!names.length || !browserDb) return
 
-    pendingConvertedKey.current = selectionKey(playlists, selected)
+    const key = selectionKey(playlists, selected)
     setStatus({ status: 'running', progress: 10, message: 'Converting...' })
     setXmlResult(null)
 
     try {
-      await new Promise(r => setTimeout(r, 30))
       const { convertLibrary } = await import('./browserConvert.js')
       const { xml, trackCount, playlistCount } = convertLibrary(browserDb, names)
       setXmlResult(xml)
-      setConvertedSelection(pendingConvertedKey.current)
+      setConvertedSelection(key)
       setStatus({
         status: 'done',
         progress: 100,
@@ -131,29 +130,10 @@ function App() {
   }
 
   const toggle = (id) => setSelected(prev => ({ ...prev, [id]: !prev[id] }))
-
-  const selectedCount = Object.values(selected).filter(Boolean).length
-  const allSelected = playlists.length > 0 && selectedCount === playlists.length
-  const someSelected = selectedCount > 0 && !allSelected
-  const isRunning = status.status === 'running'
-  const currentSelection = useMemo(
-    () => selectionKey(playlists, selected),
-    [playlists, selected],
-  )
-  const showDownload =
-    status.status === 'done' &&
-    convertedSelection !== null &&
-    convertedSelection === currentSelection &&
-    currentSelection !== ''
-
   const toggleAll = () => {
     if (allSelected) setSelected({})
     else setSelected(Object.fromEntries(playlists.map(p => [p.id, true])))
   }
-
-  useEffect(() => {
-    if (selectAllRef.current) selectAllRef.current.indeterminate = someSelected
-  }, [someSelected])
 
   return (
     <div className="app">
@@ -171,15 +151,11 @@ function App() {
             ref={fileInputRef}
             type="file"
             accept=".db"
-            onChange={handleFileChange}
+            onChange={(e) => loadLibraryFile(e.target.files?.[0])}
             disabled={isRunning}
             hidden
           />
-          <button
-            type="button"
-            onClick={openLibraryPicker}
-            disabled={isRunning}
-          >
+          <button type="button" onClick={openLibraryPicker} disabled={isRunning}>
             Select your library
           </button>
           {!libraryLoaded && (

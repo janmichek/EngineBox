@@ -1,9 +1,12 @@
-export class PlaylistResult {
-  constructor({ name, playlist_id, track_ids }) {
-    this.name = name;
-    this.playlist_id = playlist_id;
-    this.track_ids = track_ids;
-  }
+export function findPlaylistByName(db, name) {
+  const rows = db.query('SELECT id, title FROM Playlist WHERE title = ?', [name]);
+  if (!rows.length) throw new Error(`Playlist not found: ${name}`);
+  const playlistId = pickBestPlaylist(db, rows);
+  return {
+    name,
+    playlist_id: playlistId,
+    track_ids: traverseLinkedList(db, playlistId),
+  };
 }
 
 function playlistTrackCount(db, playlistId) {
@@ -63,16 +66,6 @@ function traverseLinkedList(db, listId) {
     currentId = nextEntityId;
   }
   return trackIds;
-}
-
-export function findPlaylistByName(db, name) {
-  const rows = db.query('SELECT id, title FROM Playlist WHERE title = ?', [name]);
-  if (!rows.length) {
-    throw new Error(`Playlist not found: ${name}`);
-  }
-  const playlistId = pickBestPlaylist(db, rows);
-  const trackIds = traverseLinkedList(db, playlistId);
-  return new PlaylistResult({ name, playlist_id: playlistId, track_ids: trackIds });
 }
 
 export function listPlaylists(db) {
