@@ -165,7 +165,8 @@
   line-height: 1.4;
 }
 
-.app a.download {
+.app a.download,
+.app button.download {
   --pico-background-color: var(--pico-ins-color);
   --pico-border-color: var(--pico-ins-color);
   --pico-color: #fff;

@@ -41,9 +41,9 @@ test.describe('EngineBox UI', () => {
 
     await page.click('footer button');
 
-    await expect(page.locator('footer a.download')).toBeVisible({ timeout: 120_000 });
+    await expect(page.locator('footer button.download')).toBeVisible({ timeout: 120_000 });
     await expect(page.locator('footer .footer-info')).toBeVisible();
-    await expect(page.locator('footer button')).toHaveCount(0);
+    await expect(page.locator('footer button:not(.download)')).toHaveCount(0);
   });
 
   test('shows convert again after changing selection', async ({ page }) => {
@@ -52,10 +52,10 @@ test.describe('EngineBox UI', () => {
 
     await page.locator('main ul li').first().locator('input[type="checkbox"]').check();
     await page.click('footer button');
-    await expect(page.locator('footer a.download')).toBeVisible({ timeout: 120_000 });
+    await expect(page.locator('footer button.download')).toBeVisible({ timeout: 120_000 });
 
     await page.locator('main ul li').first().locator('input[type="checkbox"]').uncheck();
-    await expect(page.locator('footer button')).toBeVisible();
-    await expect(page.locator('footer a.download')).toHaveCount(0);
+    await expect(page.locator('footer button:not(.download)')).toBeVisible();
+    await expect(page.locator('footer button.download')).toHaveCount(0);
   });
 });

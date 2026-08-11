@@ -44,18 +44,10 @@ export function mapKey(key) {
   return KEY_MAP[key];
 }
 
-export function mapComment(comment, goldenComment) {
-  if (goldenComment === 'Purchased at Beatport' && comment === null) {
-    return 'Purchased at Beatport';
-  }
-  if (comment === null) {
-    return null;
-  }
-  let flattened = comment.replace(/[\n\r]/g, '');
-  if (flattened.length > 247) {
-    flattened = flattened.substring(0, 247);
-  }
-  return flattened;
+export function mapComment(comment) {
+  if (comment == null) return null;
+  const flattened = comment.replace(/[\n\r]/g, '');
+  return flattened.length > 247 ? flattened.substring(0, 247) : flattened;
 }
 
 export function decodeBeatData(blob) {
@@ -83,6 +75,7 @@ export function decodeQuickCues(blob) {
       cues.push({
         label,
         position,
+        slot: i,
         red: (argb >> 16) & 0xff,
         green: (argb >> 8) & 0xff,
         blue: argb & 0xff,
@@ -152,22 +145,18 @@ export function decodeTrackDataSampleRate(blob) {
 export function computeCueMarks(quickCuesBlob, trackDataBlob, cueAdjustment) {
   const cues = decodeQuickCues(quickCuesBlob);
   const tdSr = decodeTrackDataSampleRate(trackDataBlob);
-  const marks = [];
-  for (let idx = 0; idx < cues.length; idx++) {
-    const cue = cues[idx];
-    const rawTime = cue.position / tdSr;
-    const start = Math.round((rawTime + cueAdjustment) * 1000) / 1000;
-    marks.push(new PositionMark({
+  return cues.map(cue => {
+    const start = Math.round((cue.position / tdSr + cueAdjustment) * 1000) / 1000;
+    return new PositionMark({
       name: cue.label,
       mark_type: 0,
       start,
-      num: idx,
+      num: cue.slot,
       red: cue.red,
       green: cue.green,
       blue: cue.blue,
-    }));
-  }
-  return marks;
+    });
+  });
 }
 
 export function decodeLoops(blob) {
@@ -192,6 +181,7 @@ export function decodeLoops(blob) {
         label,
         start_samples: startSamples,
         end_samples: endSamples,
+        slot: i,
         red: (argb >> 16) & 0xff,
         green: (argb >> 8) & 0xff,
         blue: argb & 0xff,
@@ -201,24 +191,21 @@ export function decodeLoops(blob) {
   return loops;
 }
 
-export function computeLoopMarks(loopsBlob, trackDataBlob, cueAdjustment, nextNum) {
+export function computeLoopMarks(loopsBlob, trackDataBlob, cueAdjustment) {
   const loops = decodeLoops(loopsBlob);
   const tdSr = decodeTrackDataSampleRate(trackDataBlob);
-  const marks = [];
-  for (let idx = 0; idx < loops.length; idx++) {
-    const loop = loops[idx];
+  return loops.map(loop => {
     const start = Math.round((loop.start_samples / tdSr + cueAdjustment) * 1000) / 1000;
     const end = Math.round((loop.end_samples / tdSr + cueAdjustment) * 1000) / 1000;
-    marks.push(new PositionMark({
+    return new PositionMark({
       name: loop.label,
       mark_type: 4,
       start,
-      num: nextNum + idx,
+      num: loop.slot,
       red: loop.red,
       green: loop.green,
       blue: loop.blue,
       end,
-    }));
-  }
-  return marks;
+    });
+  });
 }

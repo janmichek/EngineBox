@@ -48,9 +48,14 @@ describe('XML generator', () => {
     expect(xmlStr).toContain('Start="0.042"');
   });
 
-  it('tempo generated', () => {
-    const doc = generateXml(golden);
-    const xmlStr = doc.end();
+  it('tempo emitted when present on model', () => {
+    const withTempo = {
+      ...golden,
+      tracks: golden.tracks.map((t, i) =>
+        i === 0 ? t : { ...t, tempo: null }
+      ),
+    };
+    const xmlStr = generateXml(withTempo).end();
     expect(xmlStr).toContain('TEMPO');
     expect(xmlStr).toContain('Bpm="136.0"');
   });
