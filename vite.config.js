@@ -13,9 +13,14 @@ export default defineConfig({
   build: {
     outDir: 'dist',
     target: 'esnext',
+    commonjsOptions: {
+      include: [/sql\.js/, /node_modules/],
+      transformMixedEsModules: true,
+    },
   },
   optimizeDeps: {
-    exclude: ['sql.js'],
+    include: ['sql.js', 'sql.js/dist/sql-wasm-browser.js'],
+    needsInterop: ['sql.js', 'sql.js/dist/sql-wasm-browser.js'],
   },
   assetsInclude: ['**/*.wasm'],
 })

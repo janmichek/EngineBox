@@ -1,13 +1,16 @@
-import initSqlJs from 'sql.js'
-import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url'
+import wasmUrl from 'sql.js/dist/sql-wasm-browser.wasm?url'
 import { SqlJsDatabase } from '../converter/sqljs_database.js'
 import { listPlaylists } from '../converter/playlist.js'
 import { convertWithDb } from '../converter/convert_core.js'
 
 let sqlPromise
 
-function getSql() {
+async function getSql() {
   if (!sqlPromise) {
+    // Load CJS build via Vite prebundle (see optimizeDeps.include).
+    // Namespace import avoids "no export named default" in native ESM.
+    const mod = await import('sql.js/dist/sql-wasm-browser.js')
+    const initSqlJs = typeof mod === 'function' ? mod : (mod.default ?? mod)
     sqlPromise = initSqlJs({ locateFile: () => wasmUrl })
   }
   return sqlPromise
