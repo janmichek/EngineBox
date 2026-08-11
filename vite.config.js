@@ -10,12 +10,6 @@ export default defineConfig({
       globals: { Buffer: true, global: true },
     }),
   ],
-  server: {
-    proxy: {
-      '/api': 'http://localhost:8787',
-      '/output': 'http://localhost:8787',
-    },
-  },
   build: {
     outDir: 'dist',
     target: 'esnext',
