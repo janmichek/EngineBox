@@ -35,8 +35,38 @@ function App() {
 
   useEffect(() => () => browserDb?.close(), [browserDb])
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files?.[0]
+  const openLibraryPicker = async () => {
+    if (isRunning) return
+
+    // Chromium: start in Music (closest we can get to Engine Library).
+    if (typeof window.showOpenFilePicker === 'function') {
+      try {
+        const [handle] = await window.showOpenFilePicker({
+          id: 'engine-library',
+          startIn: 'music',
+          types: [
+            {
+              description: 'Engine OS database',
+              accept: {
+                'application/x-sqlite3': ['.db'],
+                'application/octet-stream': ['.db'],
+              },
+            },
+          ],
+          excludeAcceptAllOption: false,
+        })
+        const file = await handle.getFile()
+        await loadLibraryFile(file)
+        return
+      } catch (err) {
+        if (err?.name === 'AbortError') return
+      }
+    }
+
+    fileInputRef.current?.click()
+  }
+
+  const loadLibraryFile = async (file) => {
     if (!file) return
 
     setLoading(true)
@@ -62,6 +92,10 @@ function App() {
       setLoading(false)
       if (fileInputRef.current) fileInputRef.current.value = ''
     }
+  }
+
+  const handleFileChange = async (e) => {
+    await loadLibraryFile(e.target.files?.[0])
   }
 
   const handleConvert = async () => {
@@ -141,7 +175,7 @@ function App() {
           />
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openLibraryPicker}
             disabled={isRunning}
           >
             Select your library
