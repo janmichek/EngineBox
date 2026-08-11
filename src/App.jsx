@@ -46,14 +46,13 @@ function App() {
           startIn: 'music',
           types: [
             {
-              description: 'Engine OS database',
+              description: 'Engine OS database (*.db)',
               accept: {
                 'application/x-sqlite3': ['.db'],
-                'application/octet-stream': ['.db'],
               },
             },
           ],
-          excludeAcceptAllOption: false,
+          excludeAcceptAllOption: true,
         })
         const file = await handle.getFile()
         await loadLibraryFile(file)
@@ -68,7 +67,10 @@ function App() {
 
   const loadLibraryFile = async (file) => {
     if (!file) return
-
+    if (!/\.db$/i.test(file.name)) {
+      setError('Please select an Engine OS database file (*.db)')
+      return
+    }
     setLoading(true)
     setError(null)
     setSelected({})
@@ -168,7 +170,7 @@ function App() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".db,application/x-sqlite3,application/octet-stream"
+            accept=".db"
             onChange={handleFileChange}
             disabled={isRunning}
             hidden
