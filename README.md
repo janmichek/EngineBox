@@ -4,6 +4,7 @@ Convert Engine OS playlists to Rekordbox XML - locally, for free.
 
 A weekend vibecode project done with AI Loops. Not a product. Not advice on how to build software. Just a utility that serves me and hopefully other DJs.
 
+**[Live web version](https://engine-box.vercel.app/)**
 **[Download for macOS](https://github.com/janmichek/EngineBox/releases/latest)**
 
 <img width="720" height="809" alt="Screen Recording 2026-07-21 at 12 40 46_fast" src="https://github.com/user-attachments/assets/414cf367-ffaa-4198-bc22-01c8384b654d" />
