@@ -1,80 +1,69 @@
-const { app, BrowserWindow } = require("electron");
-const { spawn } = require("child_process");
-const path = require("path");
+const { app, BrowserWindow, dialog } = require("electron");
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 
 let mainWindow = null;
-let serverProcess = null;
+let staticServer = null;
+let appUrl = null;
 
-const SERVER_PORT = 8787;
-const SERVER_URL = `http://localhost:${SERVER_PORT}`;
+const MIME = {
+  ".html": "text/html; charset=utf-8",
+  ".js": "application/javascript; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".json": "application/json",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".wasm": "application/wasm",
+  ".map": "application/json",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+};
 
-function getServerDir() {
-  if (app.isPackaged) {
-    return path.join(process.resourcesPath, "app.asar.unpacked");
-  }
-  return path.join(__dirname, "..");
+function getDistDir() {
+  return path.join(app.getAppPath(), "dist");
 }
 
-function getNode() {
-  if (process.platform === "darwin") {
-    const candidates = [
-      process.execPath,
-      "/usr/local/bin/node",
-      "/opt/homebrew/bin/node",
-    ];
-    const fs = require("fs");
-    for (const candidate of candidates) {
-      try {
-        if (fs.existsSync(candidate)) return candidate;
-      } catch {}
-    }
-  }
-  return process.execPath;
-}
-
-function waitForServer(url, timeoutMs = 30000) {
+function startStaticServer(distDir) {
   return new Promise((resolve, reject) => {
-    const start = Date.now();
-    const check = () => {
-      http
-        .get(url, (res) => {
-          res.resume();
-          resolve();
-        })
-        .on("error", () => {
-          if (Date.now() - start > timeoutMs) {
-            reject(new Error("Server did not start in time"));
-          } else {
-            setTimeout(check, 300);
-          }
-        });
-    };
-    check();
-  });
-}
+    const server = http.createServer((req, res) => {
+      const url = new URL(req.url, "http://127.0.0.1");
+      const requested = decodeURIComponent(url.pathname);
+      const relative = requested === "/" ? "index.html" : requested.replace(/^\//, "");
+      const filePath = path.normalize(path.join(distDir, relative));
+      const distRoot = path.normalize(distDir) + path.sep;
 
-function startServer() {
-  const serverDir = getServerDir();
-  const node = getNode();
-  const serverScript = path.join(serverDir, "server.js");
+      if (filePath !== path.normalize(distDir) && !filePath.startsWith(distRoot)) {
+        res.writeHead(403);
+        res.end("Forbidden");
+        return;
+      }
 
-  serverProcess = spawn(node, [serverScript], {
-    cwd: serverDir,
-    stdio: ["ignore", "pipe", "pipe"],
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: "1" },
-  });
+      const servePath =
+        fs.existsSync(filePath) && fs.statSync(filePath).isFile()
+          ? filePath
+          : path.join(distDir, "index.html");
 
-  serverProcess.stdout.on("data", (d) => process.stdout.write(d));
-  serverProcess.stderr.on("data", (d) => process.stderr.write(d));
+      if (!fs.existsSync(servePath) || !fs.statSync(servePath).isFile()) {
+        res.writeHead(404);
+        res.end("Not found");
+        return;
+      }
 
-  serverProcess.on("error", (err) => {
-    console.error("Failed to start server:", err.message);
-  });
+      const data = fs.readFileSync(servePath);
+      res.writeHead(200, {
+        "Content-Type": MIME[path.extname(servePath)] || "application/octet-stream",
+        "Content-Length": data.length,
+      });
+      res.end(data);
+    });
 
-  serverProcess.on("exit", (code) => {
-    console.log(`Server exited with code ${code}`);
-    serverProcess = null;
+    server.once("error", reject);
+    server.listen(0, "127.0.0.1", () => {
+      const { port } = server.address();
+      resolve({ server, url: `http://127.0.0.1:${port}` });
+    });
   });
 }
 
@@ -85,49 +74,59 @@ function createWindow() {
     title: "EngineBox",
     icon: path.join(__dirname, "icon.icns"),
     titleBarStyle: "hiddenInset",
+    show: false,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
     },
   });
 
+  mainWindow.once("ready-to-show", () => {
+    if (mainWindow) mainWindow.show();
+  });
+
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 
-  mainWindow.loadURL(SERVER_URL);
+  mainWindow.loadURL(appUrl);
 }
 
-function killServer() {
-  if (serverProcess) {
-    serverProcess.kill("SIGTERM");
-    serverProcess = null;
+function stopServer() {
+  if (staticServer) {
+    staticServer.close();
+    staticServer = null;
   }
 }
 
 app.whenReady().then(async () => {
-  startServer();
-
   try {
-    await waitForServer(SERVER_URL);
+    const distDir = getDistDir();
+    const index = path.join(distDir, "index.html");
+    if (!fs.existsSync(index)) {
+      throw new Error("UI not found. Run npm run ui:build before launching Electron.");
+    }
+
+    const started = await startStaticServer(distDir);
+    staticServer = started.server;
+    appUrl = started.url;
+    createWindow();
   } catch (err) {
-    console.error(err.message);
+    dialog.showErrorBox("EngineBox", err.message);
     app.quit();
     return;
   }
 
-  createWindow();
-
   app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0 && appUrl) createWindow();
   });
 });
 
 app.on("window-all-closed", () => {
-  killServer();
+  stopServer();
   app.quit();
 });
 
 app.on("before-quit", () => {
-  killServer();
+  stopServer();
 });
