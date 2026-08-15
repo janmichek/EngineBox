@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { ReadOnlyDatabase } from '../converter/source_reader.js';
 import { findPlaylistByName, listPlaylists, loadPlaylists } from '../converter/playlist.js';
+import { FIXTURE_DB, FIXTURE_PLAYLISTS } from './fixtures.js';
 
 describe('Playlist', () => {
   let db;
 
   beforeAll(() => {
-    db = new ReadOnlyDatabase('databases/m.db');
+    db = new ReadOnlyDatabase(FIXTURE_DB);
     db.openSync();
   });
 
@@ -33,10 +34,10 @@ describe('Playlist', () => {
   });
 
   it('load playlists', () => {
-    const playlists = loadPlaylists(db, ['KVIFF 2026', 'DŇB']);
+    const playlists = loadPlaylists(db, FIXTURE_PLAYLISTS);
     expect(playlists.length).toBe(2);
-    expect(playlists[0].name).toBe('KVIFF 2026');
-    expect(playlists[1].name).toBe('DŇB');
+    expect(playlists[0].name).toBe(FIXTURE_PLAYLISTS[0]);
+    expect(playlists[1].name).toBe(FIXTURE_PLAYLISTS[1]);
     expect(playlists[0].track_ids.length).toBe(178);
     expect(playlists[1].track_ids.length).toBe(115);
   });

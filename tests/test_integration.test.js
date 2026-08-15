@@ -7,15 +7,15 @@ import { parseGoldenXml } from '../converter/golden_parser.js';
 import { compareModels } from '../converter/comparator.js';
 import { ReadOnlyDatabase } from '../converter/source_reader.js';
 import { convertWithDb } from '../converter/convert_core.js';
+import { FIXTURE_DB, FIXTURE_GOLDEN, FIXTURE_PLAYLISTS } from './fixtures.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const OUTPUT_DIR = join(__dirname, '..', 'output');
 const TEST_OUTPUT = join(OUTPUT_DIR, 'test_integration.xml');
 const CALIBRATED_OUTPUT = join(OUTPUT_DIR, 'test_calibrated.xml');
-const PLAYLISTS = ['KVIFF 2026', 'DŇB'];
 
 function loadGoldenByFilename() {
-  const golden = parseGoldenXml('databases/rekordbox.xml');
+  const golden = parseGoldenXml(FIXTURE_GOLDEN);
   const byFilename = {};
   for (const track of golden.tracks) {
     const filepath = decodeURIComponent(track.location.replace('file://localhost/', ''));
@@ -47,10 +47,10 @@ describe('Integration', () => {
 
   it('honest convert matches structure and scalar fields', () => {
     const { outputPath, trackCount, playlistCount } = doConvert(
-      PLAYLISTS,
+      FIXTURE_PLAYLISTS,
       TEST_OUTPUT,
       {},
-      'databases/m.db'
+      FIXTURE_DB
     );
 
     expect(existsSync(outputPath)).toBe(true);
@@ -60,7 +60,7 @@ describe('Integration', () => {
     const generated = parseGoldenXml(outputPath);
     const { golden } = loadGoldenByFilename();
 
-    expect(generated.playlists.map(p => p.name)).toEqual(['KVIFF 2026', 'DŇB']);
+    expect(generated.playlists.map(p => p.name)).toEqual(FIXTURE_PLAYLISTS);
     expect(generated.playlists.map(p => p.entries)).toEqual([178, 115]);
     expect(generated.playlists.map(p => p.track_keys)).toEqual(
       golden.playlists.map(p => p.track_keys)
@@ -85,10 +85,10 @@ describe('Integration', () => {
 
   it('cue-calibrated convert matches most golden Start times', () => {
     const { golden, byFilename } = loadGoldenByFilename();
-    const db = new ReadOnlyDatabase('databases/m.db');
+    const db = new ReadOnlyDatabase(FIXTURE_DB);
     db.openSync();
     try {
-      const { xml, trackCount } = convertWithDb(db, PLAYLISTS, byFilename);
+      const { xml, trackCount } = convertWithDb(db, FIXTURE_PLAYLISTS, byFilename);
       writeFileSync(CALIBRATED_OUTPUT, xml, 'utf-8');
       expect(trackCount).toBe(293);
 

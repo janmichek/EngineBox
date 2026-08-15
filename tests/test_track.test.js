@@ -10,8 +10,7 @@ import {
   decodeQuickCues, decodeTrackDataSampleRate,
   findCueAdjustment, computeCueMarks, decodeLoops, computeLoopMarks,
 } from '../converter/track.js';
-
-const PLAYLIST_NAMES = ['KVIFF 2026', 'DŇB'];
+import { FIXTURE_DB, FIXTURE_GOLDEN, FIXTURE_PLAYLISTS } from './fixtures.js';
 
 function filenameFromLocation(location) {
   const path = decodeURIComponent(location.replace('file://localhost/', ''));
@@ -26,12 +25,12 @@ describe('Track module', () => {
   let allIds = [];
 
   beforeAll(() => {
-    db = new ReadOnlyDatabase('databases/m.db');
+    db = new ReadOnlyDatabase(FIXTURE_DB);
     db.openSync();
-    golden = parseGoldenXml('databases/rekordbox.xml');
+    golden = parseGoldenXml(FIXTURE_GOLDEN);
 
     // Parse golden XML directly to get raw attributes
-    const xml = readFileSync('databases/rekordbox.xml', 'utf-8');
+    const xml = readFileSync(FIXTURE_GOLDEN, 'utf-8');
     const parser = new XMLParser({
       ignoreAttributes: false,
       attributeNamePrefix: '@_',
@@ -47,7 +46,7 @@ describe('Track module', () => {
       goldenMarksByFilename[filename] = t.POSITION_MARK || [];
     }
 
-    const playlists = loadPlaylists(db, PLAYLIST_NAMES);
+    const playlists = loadPlaylists(db, FIXTURE_PLAYLISTS);
     allIds = [...new Set(playlists.flatMap(pl => pl.track_ids))];
   });
 

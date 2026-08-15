@@ -1,6 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <path fill="#D4A056" d="M4 10 16 4 28 10 28 26 16 32 4 26Z"/>
-  <path fill="#B8894A" d="M16 4v28l12-6V10Z"/>
-  <path fill="#E8BC78" d="M4 10 16 4 28 10 16 16Z"/>
-  <path fill="#C49A5C" d="M14 4h4v28h-4z" opacity=".75"/>
+  <!-- EngineBox emblem — used for favicon, header, and app icon -->
+  <rect width="32" height="32" rx="7.6" fill="#121216"/>
+  <!-- top face -->
+  <path d="M16 5 28 11.6 16 18.2 4 11.6z" fill="#FBA35A"/>
+  <!-- left face -->
+  <path d="M4 11.6v9.2L16 27.4v-9.2z" fill="#A83704"/>
+  <!-- right face -->
+  <path d="M28 11.6v9.2L16 27.4v-9.2z" fill="#DE5C08"/>
+  <!-- disc engraved on the top face -->
+  <ellipse cx="16" cy="11.6" rx="5" ry="2.75" fill="none" stroke="#121216" stroke-width="2.2"/>
 </svg>
