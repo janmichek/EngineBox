@@ -1,7 +1,3 @@
-
-
-
-
 # EngineBox
 
 Convert Engine OS playlists to Rekordbox XML - locally, for free.
@@ -47,14 +43,6 @@ Validated against a golden reference exported by one of the paid converters for 
 **[Download for macOS](https://github.com/janmichek/EngineBox/releases/latest)**
 
 Feel free to shoot a prompt to compile Windows version. It should be fairly easy.
-
-**CLI**
-
-```bash
-node convert.js
-```
-
-Output goes to `output/rekordbox.xml`.
 
 **Tests**
 

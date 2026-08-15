@@ -30,9 +30,10 @@
 }
 
 .app-icon {
-  width: 1.75rem;
-  height: 1.75rem;
+  width: 2rem;
+  height: 2rem;
   flex-shrink: 0;
+  border-radius: 0.25rem;
 }
 
 .app header hgroup p {

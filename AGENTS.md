@@ -28,6 +28,6 @@ Goal: replicate the in-scope behavior of MIXO's Engine OS to Rekordbox XML conve
 ## Project conventions
 
 - Runtime: Node.js standard library unless a backlog task explicitly justifies a dependency.
-- Entry point: `convert.js` (CLI) or `server.js` (HTTP server + UI).
+- Conversion helper: `convert.js`. HTTP server + UI: `server.js`.
 - Tests: `npm test`.
 - Full golden comparison: run integration tests when local reference files exist.

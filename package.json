@@ -1,11 +1,10 @@
 {
   "name": "enginebox",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "EngineBox — Engine OS to Rekordbox playlist converter",
   "type": "module",
   "main": "electron/main.cjs",
   "scripts": {
-    "convert": "node convert.js",
     "test": "vitest run",
     "test:all": "npm run test && npm run test:e2e",
     "server": "node server.js",

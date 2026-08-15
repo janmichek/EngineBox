@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,7 +8,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const DATABASE = 'databases/m.db';
 const OUTPUT = join(__dirname, 'output', 'rekordbox.xml');
-const DEFAULT_PLAYLISTS = ['KVIFF 2026', 'DŇB'];
 
 export function doConvert(playlistNames, outputPath = OUTPUT, goldenRef = {}, dbPath = DATABASE) {
   mkdirSync(dirname(outputPath), { recursive: true });
@@ -26,21 +24,3 @@ export function doConvert(playlistNames, outputPath = OUTPUT, goldenRef = {}, db
 }
 
 export { convertWithDb };
-
-function main() {
-  const { outputPath, trackCount } = doConvert(DEFAULT_PLAYLISTS);
-  console.log(`Written ${trackCount} tracks to ${outputPath}`);
-}
-
-const isMain = process.argv[1] && (
-  process.argv[1].endsWith('convert.js') ||
-  process.argv[1].endsWith('convert')
-);
-if (isMain) {
-  try {
-    main();
-  } catch (e) {
-    console.error(e);
-    process.exitCode = 1;
-  }
-}
